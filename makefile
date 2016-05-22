@@ -1,6 +1,6 @@
 # Sample makefile
 
-src = src\main.cu src/random_matrix.cu
+src = src\main.cu src/random_matrix.cu src/matrix_util.cu
 lib = -lcurand
 ccopt = -O3 -arch sm_20 -ccbin "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin"
 
