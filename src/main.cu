@@ -12,13 +12,14 @@
 
 
 #include "random_matrix.h"
-#include "matrix_util.h"
+#include "unity_matrix.h"
+#include "matrix_multiplication.h"
 
 int main(int argc, char **argv)
 {
 	
 	float *h_mat, *d_mat;
-	int n = 5;
+	int n = 12;
 	
 	/* Allocate n floats on host */
 	h_mat = (float *)malloc(n*n* sizeof(float));
@@ -60,7 +61,7 @@ int main(int argc, char **argv)
 		return NULL;
 	}
 	
-	mat_mul_dev(d_c,d_b,d_mat,n);
+	matrix_multiply(d_c,d_mat,d_mat,n);
 	
 	
 	if(cudaMemcpy(h_mat, d_c, n*n * sizeof(float), cudaMemcpyDeviceToHost)!= cudaSuccess)
@@ -78,7 +79,7 @@ int main(int argc, char **argv)
 	
 	
 	float* d_unity=get_dev_unity_matrix(n);
-	mat_mul_dev(d_b,d_mat,d_unity,n);
+	matrix_multiply(d_c,d_mat,d_unity,n);
 	
 	if(cudaMemcpy(h_mat, d_unity, n*n * sizeof(float), cudaMemcpyDeviceToHost)!= cudaSuccess)
 	{
