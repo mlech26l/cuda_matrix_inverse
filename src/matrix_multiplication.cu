@@ -1,7 +1,8 @@
 #include "matrix_multiplication.h"
 #include <stdio.h>
 
-int divup(int z, int n)
+// Divides, if not evenly then increment quotient
+static int divup(int z, int n)
 {
 	int d = z/n;
 	if(n*d != z)
@@ -101,22 +102,16 @@ matrixMulCUDA(float *C, float *A, float *B, int wA, int wB)
     C[c + wB * ty + tx] = Csub;
 }
 
-// extern "C" __global__ void  matrixMulCUDA_block16(float *C, float *A, float *B, int wA, int wB)
-// {
-    // matrixMulCUDA<16>(C,A,B,wA,wB);
-// }
-
-// extern "C" __global__ void  matrixMulCUDA_block32(float *C, float *A, float *B, int wA, int wB)
-// {
-    // matrixMulCUDA<32>(C,A,B,wA,wB);
-// }
 
 void matrix_multiply(float* C, float* A, float* B, int n)
 {
-	// Invoke kernel 
+	// Define grid
 	dim3 dimBlock(MULTIPLY_BLOCK_SIZE, MULTIPLY_BLOCK_SIZE); 
 	dim3 dimGrid(divup(n, dimBlock.x), divup(n ,dimBlock.y)); 
-	printf("Launching grid <%d, %d>, <%d, %d>\n",dimGrid.x,dimGrid.y,dimBlock.x,dimBlock.y);
+	
+	printf("Launching Multiplication grid <<%d, %d>, <%d, %d>>\n",dimGrid.x,dimGrid.y,dimBlock.x,dimBlock.y);
+	
+	// Launch kernel
 	matrixMulCUDA<MULTIPLY_BLOCK_SIZE><<<dimGrid, dimBlock>>>(C, A, B, n,n); 
 
 }

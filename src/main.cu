@@ -15,9 +15,19 @@
 #include "unity_matrix.h"
 #include "matrix_multiplication.h"
 
+// Function for testing the matrix multiplication and check for unity matrix
+void test_matrix_util_functions(void);
+
 int main(int argc, char **argv)
 {
-	
+	test_matrix_util_functions();
+	exit(EXIT_SUCCESS);
+}
+
+
+
+void test_matrix_util_functions(void)
+{
 	float *h_mat, *d_mat;
 	int n = 12;
 	
@@ -47,7 +57,7 @@ int main(int argc, char **argv)
 	if(cudaMalloc((void **)&d_b, n*n* sizeof(float)) != cudaSuccess)
 	{
 		printf("Error on Cuda Malloc!\n");
-		return NULL;
+		exit(EXIT_FAILURE);
 	}
 	if(cudaMemcpy(d_b, d_mat, n*n * sizeof(float), cudaMemcpyDeviceToDevice)!= cudaSuccess)
 	{
@@ -58,7 +68,7 @@ int main(int argc, char **argv)
 	if(cudaMalloc((void **)&d_c, n*n*sizeof(float)) != cudaSuccess)
 	{
 		printf("Error on Cuda Malloc!\n");
-		return NULL;
+		exit(EXIT_FAILURE);
 	}
 	
 	matrix_multiply(d_c,d_mat,d_mat,n);
@@ -116,6 +126,4 @@ int main(int argc, char **argv)
 	cudaFree(d_b);
 	cudaFree(d_c);
 	cudaFree(d_unity);
-	exit(EXIT_SUCCESS);
-
 }

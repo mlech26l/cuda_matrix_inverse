@@ -3,56 +3,7 @@
 #include<math.h>
 #include<stdio.h>
 
-
-#define TILE_WIDTH 16
-
-// /* This is the optimized matrix multiplication algorithm as discussed in the lecture.
-   // It uses the shared memory for caching
-// */
-// Compute C = A * B
-// __global__ void matrixMultiply(float * A, float * B, float * C,
-  		       // int n) {
-    // @@ Insert code to implement matrix multiplication here
-    // __shared__ float ds_M[TILE_WIDTH][TILE_WIDTH];
-    // __shared__ float ds_N[TILE_WIDTH][TILE_WIDTH];
-    // int bx = blockIdx.x, by = blockIdx.y,
-       // tx = threadIdx.x, ty = threadIdx.y,
-       // Row = by * TILE_WIDTH + ty,
-       // Col = bx * TILE_WIDTH + tx;
-    // float Pvalue = 0;
-
-    // for (int m = 0; m < (n-1)/TILE_WIDTH+1; ++m) {
-       // if (Row < n && m*TILE_WIDTH+tx < n)
-          // ds_M[ty][tx] = A[Row*n + m*TILE_WIDTH+tx];
-       // else
-          // ds_M[ty][tx] = 0;
-       // if (Col < n && m*TILE_WIDTH+ty < n)
-          // ds_N[ty][tx] = B[(m*TILE_WIDTH+ty)*n+Col];
-       // else
-          // ds_N[ty][tx] = 0;
-
-       // __syncthreads();
-       // for (int k = 0; k < TILE_WIDTH; ++k)
-          // Pvalue += ds_M[ty][k] * ds_N[k][tx];
-       // __syncthreads();
-    // }
-    // if (Row < n && Col < n)
-       // C[Row*n+Col] = Pvalue;
-// }
-
-// void mat_mul_dev( float* C, float* A, float* B, int n)
-// {
-
-	 // @@ Initialize the grid and block dimensions here
-    // dim3 dimGrid((n-1)/TILE_WIDTH+1, (n-1)/TILE_WIDTH+1, 1);
-    // dim3 dimBlock(TILE_WIDTH, TILE_WIDTH, 1);
-
-    // @@ Launch the GPU Kernel here
-    // matrixMultiply<<<dimGrid, dimBlock>>>(A, B, C,
-                                          // n);
-
-// }
-
+/* Sets the diagonal to 1 */
 __global__
 void unity(int n, float *mat)
 {
@@ -67,6 +18,8 @@ void unity(int n, float *mat)
 		// printf("%d, %d\n",i,j);
 	}
 }
+
+/* Sets all values to 0.0f (because of float data-type memset does not work) */
 __global__
 void setzero(int n, float *mat)
 {
@@ -79,6 +32,10 @@ void setzero(int n, float *mat)
 
 }
 
+/* Accumulate function checks if current value and position matches to the definition
+ of the unity matrix, i.e. 1s in the diagonal, 0s elsewhere.
+ Returns 0 if value and position matches,
+ returns 1 if there is a conflict, i.e. matrix is not unity matrix */
 __device__
 void accumulate(float mat, int i, int n, int &ret)
 {
@@ -97,6 +54,8 @@ void accumulate(float mat, int i, int n, int &ret)
 		else ret = 0;
 	}
 }
+
+/* Allocates unity matrix of dimension n by n on the device */
 float* get_dev_unity_matrix(int n)
 {
 	int size = n*n;
@@ -173,7 +132,7 @@ struct SharedMemory<double>
         return (double *)__smem_d;
     }
 };
-template <unsigned int blockSize, bool nIsPow2>
+template <unsigned int blockSize>
 __global__ void
 reduce6(float *g_idata, int *g_odata, int size, int n)
 {
@@ -197,7 +156,7 @@ reduce6(float *g_idata, int *g_odata, int size, int n)
         mySum += acc;
 
         // ensure we don't read out of bounds -- this is optimized away for powerOf2 sized arrays
-        if (nIsPow2 || i + blockSize < size)
+        if (i + blockSize < size)
 		{
 			int acc2=0;
 			accumulate(g_idata[i+blockSize], i+blockSize, n, acc2);
@@ -327,16 +286,10 @@ void getNumBlocksAndThreads(int whichKernel, int n, int maxBlocks, int maxThread
     cudaGetDevice(&device);
     cudaGetDeviceProperties(&prop, device);
 
-    if (whichKernel < 3)
-    {
-        threads = (n < maxThreads) ? nextPow2(n) : maxThreads;
-        blocks = (n + threads - 1) / threads;
-    }
-    else
-    {
-        threads = (n < maxThreads*2) ? nextPow2((n + 1)/ 2) : maxThreads;
-        blocks = (n + (threads * 2 - 1)) / (threads * 2);
-    }
+
+	threads = (n < maxThreads*2) ? nextPow2((n + 1)/ 2) : maxThreads;
+	blocks = (n + (threads * 2 - 1)) / (threads * 2);
+
 
     if ((float)threads*blocks > (float)prop.maxGridSize[0] * prop.maxThreadsPerBlock)
     {
@@ -357,10 +310,6 @@ void getNumBlocksAndThreads(int whichKernel, int n, int maxBlocks, int maxThread
         blocks = MIN(maxBlocks, blocks);
     }
 }
-bool isPow2(unsigned int x)
-{
-    return ((x&(x-1))==0);
-}
 
 void
 reduce(int n, int threads, int blocks, float *d_idata, int *d_odata)
@@ -373,141 +322,93 @@ reduce(int n, int threads, int blocks, float *d_idata, int *d_odata)
     // worth of shared memory so that we don't index shared memory out of bounds
     int smemSize = (threads <= 32) ? 2 * threads * sizeof(int) : threads * sizeof(int);
 
-
-	if (isPow2(size))
+	switch (threads)
 	{
-		switch (threads)
-		{
-			case 512:
-				reduce6<512, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size,n);
-				break;
+		case 512:
+			reduce6< 512><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size,n);
+			break;
 
-			case 256:
-				reduce6<256, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size,n);
-				break;
+		case 256:
+			reduce6< 256><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size,n);
+			break;
 
-			case 128:
-				reduce6<128, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size,n);
-				break;
+		case 128:
+			reduce6< 128><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size,n);
+			break;
 
-			case 64:
-				reduce6<64, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size,n);
-				break;
+		case 64:
+			reduce6<  64><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size,n);
+			break;
 
-			case 32:
-				reduce6< 32, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size,n);
-				break;
+		case 32:
+			reduce6<  32><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size,n);
+			break;
 
-			case 16:
-				reduce6< 16, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size,n);
-				break;
+		case 16:
+			reduce6<  16><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size,n);
+			break;
 
-			case  8:
-				reduce6<   8, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size,n);
-				break;
+		case  8:
+			reduce6<   8><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size,n);
+			break;
 
-			case  4:
-				reduce6<  4, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size,n);
-				break;
+		case  4:
+			reduce6<   4><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size,n);
+			break;
 
-			case  2:
-				reduce6<   2, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size,n);
-				break;
+		case  2:
+			reduce6<   2><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size,n);
+			break;
 
-			case  1:
-				reduce6<   1, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size,n);
-				break;
-		}
+		case  1:
+			reduce6<   1><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size,n);
+			break;
 	}
-	else
-	{
-		switch (threads)
-		{
-			case 512:
-				reduce6< 512, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size,n);
-				break;
-
-			case 256:
-				reduce6< 256, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size,n);
-				break;
-
-			case 128:
-				reduce6< 128, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size,n);
-				break;
-
-			case 64:
-				reduce6<  64, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size,n);
-				break;
-
-			case 32:
-				reduce6<  32, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size,n);
-				break;
-
-			case 16:
-				reduce6<  16, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size,n);
-				break;
-
-			case  8:
-				reduce6<   8, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size,n);
-				break;
-
-			case  4:
-				reduce6<   4, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size,n);
-				break;
-
-			case  2:
-				reduce6<   2, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size,n);
-				break;
-
-			case  1:
-				reduce6<   1, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size,n);
-				break;
-		}
-	}
-
 }
 
 int is_unity_matrix(float* d_mat, int n)
 {
-	int *h_sum = (int *)malloc(n*n* sizeof(int));
-
+	// Allocate memory for partial results
 	int *d_sum;
 	if(cudaMalloc((void**)&d_sum, n*n* sizeof(int)) != cudaSuccess)
 	{
 		printf("Error on Cuda Malloc!\n");
 		return NULL;
 	}
+	// Set all partial results to 0
 	if(cudaMemset(d_sum, 0,n*n* sizeof(int)) != cudaSuccess)
 	{
 		printf("Error on Cuda Memset!\n");
 		return NULL;
 	}
 
+	// Define grid
 	int numBlocks=8;
 	int numThreads = 32;
+	// Launches kernel
 	reduce(n, numThreads, numBlocks, d_mat, d_sum);
 
+	// Allocate block size of memory on host
+	int *h_sum = (int *)malloc(numBlocks* sizeof(int));
+
+	// Copy last block to host
 	if(cudaMemcpy(h_sum, d_sum, numBlocks* sizeof(int), cudaMemcpyDeviceToHost)!= cudaSuccess)
 	{
 		printf("Error at cudaMemcpy! ");
 		printf("Error: %s\n",cudaGetErrorString(cudaGetLastError()));
 		exit(EXIT_FAILURE);
 	}
-	printf("sum matrix:\n");
-	for(int x = 0; x < numBlocks; x++) {
-			printf("%d ", h_sum[x]);	
-	}
-	printf("\n");
 
+	// Process last block
 	int ret =0;
 	for(int i=0;i<numBlocks;i++)
 	{
 		ret+= h_sum[i];
 	}
-	printf("numBlocks: %d\n",numBlocks);
 
-
+	// Free allocated resources
 	cudaFree(d_sum);
 	free(h_sum);
-	return ret;
+	
+	return !ret;
 }
