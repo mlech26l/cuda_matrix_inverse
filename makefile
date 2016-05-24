@@ -1,21 +1,23 @@
 # Sample makefile
 
-src = src\main.cu src/random_matrix.cu src/matrix_util.cu
 lib = -lcurand
 ccopt = -O3 -arch sm_20 -ccbin "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin"
 
 all: bin/matrix.exe
 
-bin/matrix.exe: obj/matrix_util.obj obj/random_matrix.obj obj/main.obj
+bin/matrix.exe: obj/unity_matrix.obj obj/random_matrix.obj obj/main.obj obj/matrix_multiplication.obj
 	nvcc -o $@ $(lib) $(ccopt) $^
 
 	
-obj/matrix_util.obj: src/matrix_util.cu
+obj/unity_matrix.obj: src/unity_matrix.cu
 	nvcc -c -o $@ $(lib) $(ccopt) $^
 
 obj/random_matrix.obj: src/random_matrix.cu
 	nvcc -c -o $@ $(lib) $(ccopt) $^
 
+obj/matrix_multiplication.obj: src/matrix_multiplication.cu
+	nvcc -c -o $@ $(lib) $(ccopt) $^
+	
 obj/main.obj: src/main.cu
 	nvcc -c -o $@ $(lib) $(ccopt) $^
 		
