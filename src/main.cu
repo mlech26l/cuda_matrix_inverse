@@ -18,7 +18,7 @@
 #include "lup_decomposition.h"
 
 
-
+#define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
 inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
 {
    if (code != cudaSuccess)
@@ -120,6 +120,7 @@ void test_matrix_util_functions(void)
 	
 	/* Allocate n floats on host */
 	h_mat = (float *)malloc(n*n* sizeof(float));
+	float* h_inv = (float *)malloc(n*n* sizeof(float));
 	/* Allocate n floats on device */
 
 	d_mat = generate_random_matrix(n,100,1);
@@ -155,9 +156,16 @@ void test_matrix_util_functions(void)
 	printf("}\n");
 	
 	/* Invert matrix on host using LU decomposition */
-	if(matrix_inverse_host_lup(h_mat,n) < 0)
+	/*if(matrix_inverse_host_lup(h_mat,n) < 0)
 	{
 		printf("Matrix Singular!\n");
+		exit(EXIT_SUCCESS);
+	}*/
+	int succ=0;
+	inverse(h_mat, n, h_inv, &succ);
+	if(!succ)
+	{
+		printf("Matrix singular!");
 		exit(EXIT_SUCCESS);
 	}
 	
@@ -165,7 +173,7 @@ void test_matrix_util_functions(void)
 	printf("Inverse Matrix:\n");
 	for(int x = 0; x < n; x++) {
 		for(int y = 0; y < n; y++) {
-			printf("%1.4f ", h_mat[x*n + y]);
+			printf("%1.4f ", h_inv[x*n + y]);
 		}
 		printf("\n");
 	} 
@@ -179,7 +187,7 @@ void test_matrix_util_functions(void)
 	}
 
 	/* Copy inverse matrix to device */
-	if(cudaMemcpy(d_inv, h_mat, n*n * sizeof(float), cudaMemcpyHostToDevice)!= cudaSuccess)
+	if(cudaMemcpy(d_inv, h_inv, n*n * sizeof(float), cudaMemcpyHostToDevice)!= cudaSuccess)
 	{
 		printf("Error at cudaMemcpy! ");
 		exit(EXIT_FAILURE);
