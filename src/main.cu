@@ -15,6 +15,7 @@
 #include "unity_matrix.h"
 #include "matrix_multiplication.h"
 #include "matrix.h"
+#include "matrix_gpu.h"
 #include "lup_decomposition.h"
 
 
@@ -157,7 +158,7 @@ void test_matrix_util_functions(void)
 	printf("}\n");
 
 	int succ=0;
-	inverse(h_mat, n, h_inv, &succ);
+	inverse_gpu(h_mat, n, h_inv, &succ);
 	if(!succ)
 	{
 		printf("Matrix singular!");

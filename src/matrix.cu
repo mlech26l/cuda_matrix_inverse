@@ -53,8 +53,7 @@ int read_matrix(float *** _matrix){
 //takes a matrix and returns a pointer to a invers matrix if it exists
 //the input is modified, if no inverse is found it returns a null pointer
 //out needs to point to a identity matrix
-__host__ __device__
-void inverse(float * in, int size, float * out, int * success){
+void inverse_cpu(float * in, int size, float * out, int * success){
 
 	//Gaussian elimination step
 	int i;
@@ -103,6 +102,7 @@ void inverse(float * in, int size, float * out, int * success){
 	*success = 1;
 }
 
+
 __host__ __device__
 void zero(float f, int * ret){
 	if(abs(f*1e5) < 1){
@@ -122,7 +122,6 @@ void subtract_row(float * source, float * target, float scale, int size){
 	}
 }
 
-__host__ __device__
 void divide_row(float denominator,float * row, int size){
 	int i;
 	for(i = 0;i < size; i++){
@@ -130,7 +129,17 @@ void divide_row(float denominator,float * row, int size){
 	}
 }
 
+
 __host__ __device__
+void divide_row_gpu(float denominator,float * row, int size){
+	int i;
+	for(i = 0;i < size; i++){
+		row[i] = row[i]/denominator;
+	}
+}
+
+
+
 void find_and_swap_up_row(float * a, int row, int size, int * ret){
 	int i;
 	for(i = (row + 1)*size;i < size*size; i++){
@@ -155,6 +164,8 @@ void find_and_swap_up_row(float * a, int row, int size, int * ret){
 	
 	*ret = 0;;
 }
+
+
 
 void print_matrix(float * matrix, int N){
 	int i;
