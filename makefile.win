@@ -1,14 +1,13 @@
 # Sample makefile
 
 lib = -lcurand
-ccopt = -O3 -arch sm_20 -ccbin "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin"
+ccopt = -O3 -G -arch sm_20 -ccbin "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin"
 
 all: bin/matrix.exe
 
-bin/matrix.exe: obj/unity_matrix.obj obj/lup_decomposition.obj obj/random_matrix.obj obj/main.obj obj/matrix_multiplication.obj
+bin/matrix.exe: obj/main.obj obj/lup_decomposition.obj obj/random_matrix.obj obj/matrix_multiplication.obj obj/unity_matrix.obj obj/matrix.obj
 	nvcc -o $@ $(lib) $(ccopt) $^
 
-	
 obj/lup_decomposition.obj: src/lup_decomposition.cu
 	nvcc -c -o $@ $(lib) $(ccopt) $^
 	
@@ -24,7 +23,10 @@ obj/matrix_multiplication.obj: src/matrix_multiplication.cu
 obj/main.obj: src/main.cu
 	nvcc -c -o $@ $(lib) $(ccopt) $^
 		
-	
+obj/matrix.obj: src/matrix.cu
+	nvcc -c -o $@ $(lib) $(ccopt) $^
+		
+		
 clean:
-	rm obj/*.obj
-	rm bin/matrix.exe
+	del obj\*.obj
+	del bin\matrix.exe
