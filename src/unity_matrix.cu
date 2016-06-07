@@ -3,6 +3,7 @@
 #include<math.h>
 #include<stdio.h>
 
+
 /* Sets the diagonal to 1 */
 __global__
 void unity(int n, float *mat)
@@ -311,8 +312,7 @@ void getNumBlocksAndThreads(int whichKernel, int n, int maxBlocks, int maxThread
     }
 }
 
-void
-reduce(int n, int threads, int blocks, float *d_idata, int *d_odata)
+void reduce(int n, int threads, int blocks, float *d_idata, int *d_odata)
 {
 	int size = n*n;
     dim3 dimBlock(threads, 1, 1);
