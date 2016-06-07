@@ -117,14 +117,14 @@ void test_matrix_util_functions(void)
 {
 	float *h_mat, *d_mat;
 	int n = 3;
-	
+
 	/* Allocate n floats on host */
 	h_mat = (float *)malloc(n*n* sizeof(float));
 	float* h_inv = create_identity_matrix(n);
 	/* Allocate n floats on device */
 
 	d_mat = generate_random_matrix(n,100,1);
-	
+
 	/* Copy random matrix to host */
 	gpuErrchk(cudaMemcpy(h_mat, d_mat, n*n * sizeof(float), cudaMemcpyDeviceToHost))
 
@@ -135,7 +135,7 @@ void test_matrix_util_functions(void)
 			printf("%1.4f ", h_mat[x*n + y]);
 		}
 		printf("\n");
-	} 
+	}
 	printf("WA output form:\n");
 	printf("inverse {");
 	for(int x = 0; x < n; x++) {
@@ -148,9 +148,9 @@ void test_matrix_util_functions(void)
 		printf("}");
 		if(x != n-1)
 			printf(", ");
-	} 
+	}
 	printf("}\n");
-	
+
 	int succ=0;
 	inverse(h_mat, n, h_inv, &succ);
 	if(!succ)
@@ -158,7 +158,7 @@ void test_matrix_util_functions(void)
 		printf("Matrix singular!");
 		exit(EXIT_SUCCESS);
 	}
-	
+
 	/* Print out inverse matrix */
 	printf("Inverse Matrix:\n");
 	for(int x = 0; x < n; x++) {
@@ -166,31 +166,39 @@ void test_matrix_util_functions(void)
 			printf("%1.4f ", h_inv[x*n + y]);
 		}
 		printf("\n");
-	} 
-	
-	/* Allocate second matrix on device for multiplication */
-	float *d_inv;
-	if(cudaMalloc((void **)&d_inv, n*n* sizeof(float)) != cudaSuccess)
-	{
-		printf("Error on Cuda Malloc!\n");
-		exit(EXIT_FAILURE);
 	}
 
+	/* Allocate second matrix on device for multiplication */
+	float *d_inv;
+	gpuErrchk(cudaMalloc((void **)&d_inv, n*n* sizeof(float)))
+
+	float *d_identity;
+	gpuErrchk(cudaMalloc((void **)&d_identity, n*n* sizeof(float)))
+
 	/* Copy inverse matrix to device */
-	if(cudaMemcpy(d_inv, h_inv, n*n * sizeof(float), cudaMemcpyHostToDevice)!= cudaSuccess)
-	{
-		printf("Error at cudaMemcpy! ");
-		exit(EXIT_FAILURE);
-	}
+	gpuErrchk(cudaMemcpy(d_inv, h_inv, n*n * sizeof(float), cudaMemcpyHostToDevice))
+
 	/* Multiply matrix with inverse */
-	matrix_multiply(d_inv,d_mat,d_inv,n);
-	
-	int ur = is_unity_matrix(d_inv,n);
+	matrix_multiply(d_identity,d_mat,d_inv,n);
+
+	/* Copy random matrix to host */
+	gpuErrchk(cudaMemcpy(h_inv, d_identity, n*n * sizeof(float), cudaMemcpyDeviceToHost))
+	/* Print out identity matrix */
+	printf("Identity Matrix:\n");
+	for(int x = 0; x < n; x++) {
+		for(int y = 0; y < n; y++) {
+			printf("%1.4f ", h_inv[x*n + y]);
+		}
+		printf("\n");
+	}
+
+
+	int ur = is_unity_matrix(d_identity,n);
 	if(ur)
 		printf("SUCCESS! Matix inversion was successfull!!!!!\n");
 	else
 		printf("FAILED! Matrix inversion not successfull\n");
-	
+
 	free(h_mat);
 	cudaFree(d_mat);
 	cudaFree(d_inv);

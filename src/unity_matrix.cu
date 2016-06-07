@@ -44,13 +44,13 @@ void accumulate(float mat, int i, int n, int &ret)
 	int y = i%n;
 	if(y==x)
 	{
-		if(mat>1.001 || mat<0.99)
+		if(mat>1.1 || mat<0.9)
 			ret = 1;
 		else ret = 0;
 	}
 	else
 	{
-		if(mat>0.01 || mat < -0.01)
+		if(mat>0.1 || mat < -0.1)
 			ret = 1;
 		else ret = 0;
 	}
