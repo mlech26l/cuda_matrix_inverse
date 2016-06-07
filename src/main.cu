@@ -120,17 +120,13 @@ void test_matrix_util_functions(void)
 	
 	/* Allocate n floats on host */
 	h_mat = (float *)malloc(n*n* sizeof(float));
-	float* h_inv = (float *)malloc(n*n* sizeof(float));
+	float* h_inv = create_identity_matrix(n);
 	/* Allocate n floats on device */
 
 	d_mat = generate_random_matrix(n,100,1);
 	
 	/* Copy random matrix to host */
-	if(cudaMemcpy(h_mat, d_mat, n*n * sizeof(float), cudaMemcpyDeviceToHost)!= cudaSuccess)
-	{
-		printf("Error at cudaMalloc! ");
-		exit(EXIT_FAILURE);
-	}
+	gpuErrchk(cudaMemcpy(h_mat, d_mat, n*n * sizeof(float), cudaMemcpyDeviceToHost))
 
 	/* Print out random generated matrix */
 	printf("Random generated Matrix:\n");
@@ -155,12 +151,6 @@ void test_matrix_util_functions(void)
 	} 
 	printf("}\n");
 	
-	/* Invert matrix on host using LU decomposition */
-	/*if(matrix_inverse_host_lup(h_mat,n) < 0)
-	{
-		printf("Matrix Singular!\n");
-		exit(EXIT_SUCCESS);
-	}*/
 	int succ=0;
 	inverse(h_mat, n, h_inv, &succ);
 	if(!succ)

@@ -1,7 +1,7 @@
 # Sample makefile
 
 lib = -lcurand
-ccopt = -O3 -arch sm_20 -ccbin g++
+ccopt = -arch sm_20 -ccbin g++ -g
 
 all: bin/matrix.exe
 
