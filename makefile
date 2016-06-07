@@ -5,7 +5,7 @@ ccopt = -O3 -arch sm_20 -ccbin g++
 
 all: bin/matrix.exe
 
-bin/matrix.exe: obj/unity_matrix.obj obj/random_matrix.obj obj/main.obj obj/matrix_multiplication.obj
+bin/matrix.exe: obj/main.obj obj/random_matrix.obj obj/matrix_multiplication.obj obj/unity_matrix.obj obj/matrix.obj
 	nvcc -o $@ $(lib) $(ccopt) $^
 
 	
@@ -19,6 +19,9 @@ obj/matrix_multiplication.obj: src/matrix_multiplication.cu
 	nvcc -c -o $@ $(lib) $(ccopt) $^
 	
 obj/main.obj: src/main.cu
+	nvcc -c -o $@ $(lib) $(ccopt) $^
+	
+obj/matrix.obj: src/matrix.cu
 	nvcc -c -o $@ $(lib) $(ccopt) $^
 		
 	
