@@ -24,19 +24,36 @@ static int LUPinverse(int size, int* P, float* LU,\
 
 int matrix_inverse_host_lup(float* A, int n)
 {
+	float* C= (float*)malloc(sizeof(float)*(n+1)*(n+1));
+	for(int x = 0; x < n; x++) {
+		for(int y = 0; y < n; y++) {
+			C[(x+1)*n+y+1] = A[x*n + y];
+		}
+		printf("\n");
+	} 
+	
 	int* P= (int*)malloc(sizeof(int)*(n+1));
 
 	float* X= (float*)malloc(sizeof(float)*(n+1));
 	float* Y= (float*)malloc(sizeof(float)*(n+1));
 	float* B= (float*)malloc(sizeof(float)*(n+1)*(n+1));
 	
-	if(LUPdecompose(n+1, &A[-2-n], P) < 0) return -1;
-	if(LUPinverse(n+1, P, &A[-2-n], B, X, Y) < 0) return -1;
+	if(LUPdecompose(n+1, C, P) < 0) return -1;
+	if(LUPinverse(n+1, P, C, B, X, Y) < 0) return -1;
 	
+	for(int x = 0; x < n; x++) {
+		for(int y = 0; y < n; y++) {
+			 A[x*n + y] = C[(x+1)*n+y+1];
+		}
+		printf("\n");
+	} 
+	
+	free(C);
 	free(P);
 	free(X);
 	free(Y);
 	free(B);
+	
 	return 0;
 }
 
