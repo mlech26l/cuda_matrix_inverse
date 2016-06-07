@@ -116,7 +116,7 @@ int main1(int argc, char **argv)
 void test_matrix_util_functions(void)
 {
 	float *h_mat, *d_mat;
-	int n = 3;
+	int n = 6;
 
 	/* Allocate n floats on host */
 	h_mat = (float *)malloc(n*n* sizeof(float));
