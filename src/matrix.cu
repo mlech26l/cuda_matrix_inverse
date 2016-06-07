@@ -59,15 +59,15 @@ void inverse(float * in, int size, float * out, int * success){
 	//Gaussian elimination step
 	int i;
 	for(i = 0; i < size; i++){
-		int * ret = 0;
-		zero(in[i*size + i], ret);
-		if(*ret){ // "equals" zero
-			find_and_swap_up_row(in, i, size, ret);
-			if(*ret == 0){
+		int ret;
+		zero(in[i*size + i], &ret);
+		if(ret){ // "equals" zero
+			find_and_swap_up_row(in, i, size, &ret);
+			if(ret == 0){
 				*success = 0;
 				return;
 			}
-			find_and_swap_up_row(out, i, size, ret);
+			find_and_swap_up_row(out, i, size, &ret);
 		}
 		// here we have something in in[i][i] to work with
 		
