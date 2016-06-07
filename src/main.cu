@@ -117,6 +117,9 @@ void test_matrix_util_functions(void)
 {
 	float *h_mat, *d_mat;
 	int n = 6;
+	printf("Enter matrix dim: ");
+	scanf("%f",&n);
+	printf("\nDoing matrix inversion test with n=%d\n");
 
 	/* Allocate n floats on host */
 	h_mat = (float *)malloc(n*n* sizeof(float));
