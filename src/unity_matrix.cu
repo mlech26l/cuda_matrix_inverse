@@ -3,6 +3,15 @@
 #include<math.h>
 #include<stdio.h>
 
+#define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
+inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
+{
+   if (code != cudaSuccess)
+   {
+      fprintf(stderr,"GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
+      if (abort) exit(code);
+   }
+}
 
 /* Sets the diagonal to 1 */
 __global__
@@ -370,20 +379,13 @@ int is_unity_matrix(float* d_mat, int n)
 {
 	// Allocate memory for partial results
 	int *d_sum;
-	if(cudaMalloc((void**)&d_sum, n*n* sizeof(int)) != cudaSuccess)
-	{
-		printf("Error on Cuda Malloc!\n");
-		return NULL;
-	}
+	gpuErrchk(cudaMalloc((void**)&d_sum, n*n* sizeof(int)))
+
 	// Set all partial results to 0
-	if(cudaMemset(d_sum, 0,n*n* sizeof(int)) != cudaSuccess)
-	{
-		printf("Error on Cuda Memset!\n");
-		return NULL;
-	}
+	gpuErrchk(cudaMemset(d_sum, 0,n*n* sizeof(int)))
 
 	// Define grid
-	int numBlocks=8;
+	int numBlocks=4;
 	int numThreads = 32;
 	// Launches kernel
 	reduce(n, numThreads, numBlocks, d_mat, d_sum);
@@ -392,12 +394,7 @@ int is_unity_matrix(float* d_mat, int n)
 	int *h_sum = (int *)malloc(numBlocks* sizeof(int));
 
 	// Copy last block to host
-	if(cudaMemcpy(h_sum, d_sum, numBlocks* sizeof(int), cudaMemcpyDeviceToHost)!= cudaSuccess)
-	{
-		printf("Error at cudaMemcpy! ");
-		printf("Error: %s\n",cudaGetErrorString(cudaGetLastError()));
-		exit(EXIT_FAILURE);
-	}
+	gpuErrchk(cudaMemcpy(h_sum, d_sum, numBlocks* sizeof(int), cudaMemcpyDeviceToHost))
 
 	// Process last block
 	int ret =0;
