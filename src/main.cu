@@ -28,6 +28,8 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
    }
 }
 
+static void multiply_and_print(float* A, float* Ainv, int n);
+
 // Function for testing the matrix multiplication and check for unity matrix
 void test_matrix_util_functions(void);
 
@@ -118,8 +120,8 @@ void test_matrix_util_functions(void)
 	float *h_mat, *d_mat;
 	int n = 6;
 	printf("Enter matrix dim: ");
-	scanf("%f",&n);
-	printf("\nDoing matrix inversion test with n=%d\n");
+	scanf("%d",&n);
+	printf("\nDoing matrix inversion test with n=%d\n",n);
 
 	/* Allocate n floats on host */
 	h_mat = (float *)malloc(n*n* sizeof(float));
@@ -144,13 +146,13 @@ void test_matrix_util_functions(void)
 	for(int x = 0; x < n; x++) {
 		printf("{");
 		for(int y = 0; y < n; y++) {
-			printf("%1.4f ", h_mat[x*n + y]);
+			printf("%1.0f", h_mat[x*n + y]);
 			if(y != n-1)
-				printf(", ");
+				printf(",");
 		}
 		printf("}");
 		if(x != n-1)
-			printf(", ");
+			printf(",");
 	}
 	printf("}\n");
 
@@ -161,6 +163,9 @@ void test_matrix_util_functions(void)
 		printf("Matrix singular!");
 		exit(EXIT_SUCCESS);
 	}
+	/* Copy random matrix to host for checking */
+	gpuErrchk(cudaMemcpy(h_mat, d_mat, n*n * sizeof(float), cudaMemcpyDeviceToHost))
+	multiply_and_print(h_mat,h_inv,n);
 
 	/* Print out inverse matrix */
 	printf("Inverse Matrix:\n");
@@ -205,4 +210,21 @@ void test_matrix_util_functions(void)
 	free(h_mat);
 	cudaFree(d_mat);
 	cudaFree(d_inv);
+}
+static void multiply_and_print(float* A, float* Ainv, int n)
+{
+	printf("Multiply and print:\n");
+	for(int x = 0; x < n; x++) {
+		for(int y = 0; y < n; y++) {
+			float sum=0;
+			for(int k=0;k<n;k++)
+			{
+				sum+= A[x*n+k]*Ainv[k*n+y];
+			}
+			printf("%1.3f",sum);
+			if(y!= n-1)
+				printf(", ");
+		}
+		printf("\n");
+	}
 }
