@@ -30,25 +30,14 @@ void inverse_gpu(float * in, int size, float * out, int * success){
 		//todo, there was a check for the possibility to invert here before (row swap), should be brought back adventually
 
 		//scale the row so that [i][i] == 1
-		float demominator = in[i*size + i];
-		divide_row_gpu<<<size/32 + 1,32>>>(demominator, d_out, i*size, size);
-		divide_row_gpu<<<size/32 + 1,32>>>(demominator, d_in, i*size, size);
-
-		gpuErrchk(cudaMemcpy(out + i*size, d_out + i*size, size*sizeof(float), cudaMemcpyDeviceToHost))
-		gpuErrchk(cudaMemcpy(in + i*size, d_in + i*size, size*sizeof(float), cudaMemcpyDeviceToHost))
-
+		divide_2rows_gpu<<<size/32 + 1,32>>>(i*size + i,d_in + i*size, d_out + i*size, size);
 		//zero out the column below
-		int j;
-		for(j = i + 1; j < size; j++){
-
-			float scale = in[j*size + i];
-			subtract_row_gpu<<<size/32 + 1, 32>>>(d_out + i*size, d_out + j*size, scale, size);
-			subtract_row_gpu<<<size/32 + 1, 32>>>(d_in + i*size, d_in + j*size, scale, size); // in row, out/target row, scale the in row, size
-			gpuErrchk(cudaMemcpy(out + j*size, d_out + j*size, size*sizeof(float), cudaMemcpyDeviceToHost))
-			gpuErrchk(cudaMemcpy(in + j*size, d_in + j*size, size*sizeof(float), cudaMemcpyDeviceToHost))
-		}
+		subtract_rows_gpu<<<size/32 + 1,32>>>(i, d_in, d_out, size);
 	}
 
+//sync the memory
+	gpuErrchk(cudaMemcpy(out, d_out, size*size*sizeof(float), cudaMemcpyDeviceToHost))
+	gpuErrchk(cudaMemcpy(in, d_in, size*size*sizeof(float), cudaMemcpyDeviceToHost))
 
 	//back substitution step
 	int column;
@@ -68,19 +57,31 @@ void inverse_gpu(float * in, int size, float * out, int * success){
 	*success = 1;
 }
 
-// in row, out/target row, scale the in row, size
+
 __global__
-void subtract_row_gpu(float * source, float * target, float scale, int size){
+void subtract_rows_gpu(int i, float * in, float * out, int size){
 	int idx = blockIdx.x*blockDim.x  + threadIdx.x;
 	if(idx < size){
-		target[idx] = target[idx] - (source[idx] * scale);
+		int j;
+		for(j = i + 1; j < size; j++){
+
+			float scale = in[j*size + i];
+			out[idx + j*size] = out[idx+j*size] - (out[idx + i*size] * scale);
+			in[idx + j*size] = in[idx+j*size] - (in[idx + i*size] * scale);
+		}
 	}
 }
 
+
+//takes vector[denominator_idx] as index and divides all elements in the row from vector and vector2
 __global__
-void divide_row_gpu(float denominator,float * vector, int start_idx, int size){
+void divide_2rows_gpu(int denominator_idx,float * vector, float * vector2, int size){
 	int idx = blockIdx.x*blockDim.x  + threadIdx.x;
+	float denominator = vector[denominator_idx];
+
+	__syncthreads();
 	if(idx < size){
-		vector[idx + start_idx] = vector[idx + start_idx]/denominator;
+		vector[idx] = vector[idx]/denominator;
+		vector2[idx] = vector2[idx]/denominator;
 	}
 }
