@@ -31,8 +31,8 @@ void inverse_gpu(float * in, int size, float * out, int * success){
 
 		//scale the row so that [i][i] == 1
 		float demominator = in[i*size + i];
-		divide_row_gpu<<<size/32 + 1,32>>>(demominator, out, i*size, size);
-		divide_row_gpu<<<size/32 + 1,32>>>(demominator, in, i*size, size);
+		divide_row_gpu<<<size/32 + 1,32>>>(demominator, d_out, i*size, size);
+		divide_row_gpu<<<size/32 + 1,32>>>(demominator, d_in, i*size, size);
 
 		gpuErrchk(cudaMemcpy(out + i*size, d_out + i*size, size*sizeof(float), cudaMemcpyDeviceToHost))
 		gpuErrchk(cudaMemcpy(in + i*size, d_in + i*size, size*sizeof(float), cudaMemcpyDeviceToHost))
@@ -42,8 +42,8 @@ void inverse_gpu(float * in, int size, float * out, int * success){
 		for(j = i + 1; j < size; j++){
 
 			float scale = in[j*size + i];
-			subtract_row_gpu<<<size/32 + 1, 32>>>(out, i*size, out, j*size , scale, size);
-			subtract_row_gpu<<<size/32 + 1, 32>>>(in, i*size, in, j*size, scale, size); // in row, out/target row, scale the in row, size
+			subtract_row_gpu<<<size/32 + 1, 32>>>(d_out, i*size, d_out, j*size , scale, size);
+			subtract_row_gpu<<<size/32 + 1, 32>>>(d_in, i*size, d_in, j*size, scale, size); // in row, out/target row, scale the in row, size
 			gpuErrchk(cudaMemcpy(out + j*size, d_out + j*size, size*sizeof(float), cudaMemcpyDeviceToHost))
 			gpuErrchk(cudaMemcpy(in + j*size, d_in + j*size, size*sizeof(float), cudaMemcpyDeviceToHost))
 		}
