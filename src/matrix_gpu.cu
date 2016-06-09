@@ -42,8 +42,8 @@ void inverse_gpu(float * in, int size, float * out, int * success){
 		for(j = i + 1; j < size; j++){
 
 			float scale = in[j*size + i];
-			subtract_row_gpu<<<size/32 + 1, 32>>>(d_out, i*size, d_out, j*size , scale, size);
-			subtract_row_gpu<<<size/32 + 1, 32>>>(d_in, i*size, d_in, j*size, scale, size); // in row, out/target row, scale the in row, size
+			subtract_row_gpu<<<size/32 + 1, 32>>>(d_out + i*size, d_out + j*size, scale, size);
+			subtract_row_gpu<<<size/32 + 1, 32>>>(d_in + i*size, d_in + j*size, scale, size); // in row, out/target row, scale the in row, size
 			gpuErrchk(cudaMemcpy(out + j*size, d_out + j*size, size*sizeof(float), cudaMemcpyDeviceToHost))
 			gpuErrchk(cudaMemcpy(in + j*size, d_in + j*size, size*sizeof(float), cudaMemcpyDeviceToHost))
 		}
@@ -70,10 +70,10 @@ void inverse_gpu(float * in, int size, float * out, int * success){
 
 // in row, out/target row, scale the in row, size
 __global__
-void subtract_row_gpu(float * source, int source_start_idx, float * target, int target_start_idx, float scale, int size){
+void subtract_row_gpu(float * source, float * target, float scale, int size){
 	int idx = blockIdx.x*blockDim.x  + threadIdx.x;
 	if(idx < size){
-		target[idx + target_start_idx] = target[idx + target_start_idx] - (source[idx + source_start_idx] * scale);
+		target[idx] = target[idx] - (source[idx] * scale);
 	}
 }
 
