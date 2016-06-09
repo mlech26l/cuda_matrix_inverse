@@ -158,7 +158,7 @@ void test_matrix_util_functions(void)
 	printf("}\n");
 
 	int succ=0;
-	inverse_gpu(h_mat, n, h_inv, &succ);
+	inverse_cpu(h_mat, n, h_inv, &succ);
 	if(!succ)
 	{
 		printf("Matrix singular!");
@@ -166,7 +166,7 @@ void test_matrix_util_functions(void)
 	}
 	/* Copy random matrix to host for checking */
 	gpuErrchk(cudaMemcpy(h_mat, d_mat, n*n * sizeof(float), cudaMemcpyDeviceToHost))
-	multiply_and_print(h_mat,h_inv,n);
+	// multiply_and_print(h_mat,h_inv,n);
 
 	/* Print out inverse matrix */
 	printf("Inverse Matrix:\n");
