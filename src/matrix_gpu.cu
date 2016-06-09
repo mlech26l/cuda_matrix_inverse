@@ -32,42 +32,32 @@ void inverse_gpu(float * in, int size, float * out, int * success){
 		//scale the row so that [i][i] == 1
 		divide_2rows_gpu<<<size/32 + 1,32>>>(i*size + i,d_in + i*size, d_out + i*size, size);
 		//zero out the column below
-		subtract_rows_gpu<<<size/32 + 1,32>>>(i, d_in, d_out, size);
+		zero_out_column_gpu<<<size/32 + 1,32>>>(i, 1, d_in, d_out, size);
 	}
-
-//sync the memory
-	gpuErrchk(cudaMemcpy(out, d_out, size*size*sizeof(float), cudaMemcpyDeviceToHost))
-	gpuErrchk(cudaMemcpy(in, d_in, size*size*sizeof(float), cudaMemcpyDeviceToHost))
 
 	//back substitution step
 	int column;
 	for(column = size - 1; column >= 1; column--){
-		int row;
-		for(row = column-1; row >= 0; row--){
-			float factor = in[row*size + column];
-
-			int j;
-			for(j = 0; j < size; j++){
-				out[row*size + j] = out[row*size + j] - factor*out[column*size +j];
-				in[row*size + j] = in[row*size + j] - factor*in[column*size +j];
-			}
-		}
+		zero_out_column_gpu<<<size/32 + 1,32>>>(column, -1, d_in, d_out, size);
 	}
+
+	//get the inverted matrix back to host memory
+	gpuErrchk(cudaMemcpy(out, d_out, size*size*sizeof(float), cudaMemcpyDeviceToHost))
 
 	*success = 1;
 }
 
 
 __global__
-void subtract_rows_gpu(int i, float * in, float * out, int size){
+void zero_out_column_gpu(int column, int direction, float * in, float * out, int size){
 	int idx = blockIdx.x*blockDim.x  + threadIdx.x;
 	if(idx < size){
 		int j;
-		for(j = i + 1; j < size; j++){
+		for(j = column + direction; j < size; j++){
 
-			float scale = in[j*size + i];
-			out[idx + j*size] = out[idx+j*size] - (out[idx + i*size] * scale);
-			in[idx + j*size] = in[idx+j*size] - (in[idx + i*size] * scale);
+			float scale = in[j*size + column];
+			out[idx + j*size] = out[idx+j*size] - (out[idx + column*size] * scale);
+			in[idx + j*size] = in[idx+j*size] - (in[idx + column*size] * scale);
 		}
 	}
 }
