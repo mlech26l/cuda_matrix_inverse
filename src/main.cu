@@ -28,7 +28,7 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
       if (abort) exit(code);
    }
 }
-
+void jakobs_test_suite();
 static void multiply_and_print(float* A, float* Ainv, int n);
 
 // Function for testing the matrix multiplication and check for unity matrix
@@ -36,24 +36,14 @@ void test_matrix_util_functions(void);
 
 int main(int argc, char **argv)
 {
+	if(argc > 1){
+		if(!strcmp(argv[1],"-j")){ //this is so that nobody removes the gpu test again.. don't touch this.
+			jakobs_test_suite();
+			return 0;
+		}
+	}
 	test_matrix_util_functions();
 	exit(EXIT_SUCCESS);
-}
-
-
-__global__ void reduce0(float *_idata, float *_odata, int size) {
-	unsigned int i = blockIdx.x*blockDim.x + threadIdx.x;
-
-	for(unsigned int s=1; s < size; s *= 2) {
-		if(i*s < size){
-			_idata[i] += _idata[i*2*s];
-		}
-		__syncthreads();
-	}
-
-	if (i == 0) {
-		_odata[0] = _idata[i];
-	}
 }
 
 float * create_identity_matrix(int size){
@@ -69,52 +59,96 @@ float * create_identity_matrix(int size){
 	return out;
 }
 
-int main1(int argc, char **argv)
-{
-	float * matrix;
-
-
-	float * ret  = 0;
-
-	int size = 2;
-
-	matrix = create_identity_matrix(size);
-	print_matrix(matrix,size);
-
-	int total_size = size*size;
-
-	float *d_matrix, *d_answer;
-	int * d_size;
-
-	//malloc section
-	gpuErrchk(cudaMalloc((void **)&d_matrix, total_size * sizeof(float)))
-
-	gpuErrchk(cudaMalloc((void **)&d_answer, 1 * sizeof(float)))
-
-	gpuErrchk(cudaMalloc((void **)&d_size, 1 * sizeof(int)))
-
-/////////////////////
-
-	///data transfer
-	gpuErrchk(cudaMemcpy(d_matrix, matrix, total_size * sizeof(float), cudaMemcpyHostToDevice))
-
-	gpuErrchk(cudaMemcpy(d_size, &total_size, 1 * sizeof(int), cudaMemcpyHostToDevice))
-	gpuErrchk(cudaMemcpy(d_answer, ret, 1 * sizeof(float), cudaMemcpyHostToDevice))
-
-/////////////////////
-
-	int threadsPerBlock = 1;
-	int blocksPerGrid = 1;
-
-	reduce0<<<blocksPerGrid, threadsPerBlock>>>(d_matrix,d_answer,total_size);
-
-	gpuErrchk(cudaMemcpy(ret, d_answer, 1 * sizeof(float), cudaMemcpyDeviceToHost));
-	printf("sum of the matrix is = %f\n",*ret);
-
-	free(matrix);
-	return 0;
+void WAprint(int size_of_one_side, float * matrix){
+	printf("WA output form:\n");
+	printf("inverse {");
+	for(int x = 0; x < size_of_one_side; x++) {
+		printf("{");
+		for(int y = 0; y < size_of_one_side; y++) {
+			printf("%1.0f", matrix[x*size_of_one_side + y]);
+			if(y != size_of_one_side-1)
+				printf(",");
+		}
+		printf("}");
+		if(x != size_of_one_side-1)
+			printf(",");
+	}
+	printf("}\n");
 }
 
+//simply check the bit patterns.. hope that the gpu uses the same precision as the cpu
+int is_equal(float * a, float * b, int size){
+	int i;
+	for(i = 0;i < size;i++){
+		if(a[i] != b[i]){
+			return 0;
+		}
+	}
+	return 1;
+}
+
+//do not touch this function if you do not really, really, know what you are doing.
+void jakobs_test_suite(){
+	printf("running Jakobs tests.\n");
+	float *matrix;
+	int n = 3;
+	printf("\nDoing matrix inversion test with n=%d\n",n);
+
+	/* Allocate n floats on host */
+	matrix = create_identity_matrix(n);//(float *)malloc(n*n* sizeof(float));
+	matrix[1] = 1;
+	matrix[6] = 1;
+	float * matrix_org = create_identity_matrix(n); //used instead of malloc because lazy and easy..
+	int i;
+	for(i = 0;i <n*n; i++){
+		matrix_org[i] = matrix[i];
+	}
+	float* inverse = create_identity_matrix(n);
+	float* inverse_matrix_cpu = create_identity_matrix(n);
+	/* Allocate n floats on device */
+
+	/* Print out test matrix */
+	printf("test Matrix org:\n");
+	print_matrix(matrix,n);
+
+	printf("test Matrix:\n");
+	print_matrix(matrix,n);
+	WAprint(n,matrix);
+
+	int succ=0;
+
+	//running cpu test first because it has singularity check.
+	//inversion destroys the matrix
+	inverse_cpu(matrix, n, inverse_matrix_cpu, &succ);
+	if(!succ)
+	{
+		printf("Matrix singular!");
+		exit(EXIT_SUCCESS);
+	}
+
+	//restore the matrix
+	for(i = 0;i <n*n; i++){
+		matrix[i] = matrix_org[i];
+	}
+
+	inverse_gpu(matrix, n, inverse, &succ);
+
+	if(!is_equal(inverse,inverse_matrix_cpu,n*n)){
+		printf("matrixes not equal. printing.\n\n");
+		printf("gpu matrix \n");
+		print_matrix(inverse, n);
+		printf("\n\ncpu matrix \n");
+		print_matrix(inverse_matrix_cpu, n);
+	} else {
+		printf("matrixes equal. all is good. \n");
+	}
+
+
+	free(matrix);
+	free(matrix_org);
+	free(inverse);
+	free(inverse_matrix_cpu);
+}
 
 void test_matrix_util_functions(void)
 {
@@ -212,6 +246,7 @@ void test_matrix_util_functions(void)
 	cudaFree(d_mat);
 	cudaFree(d_inv);
 }
+
 static void multiply_and_print(float* A, float* Ainv, int n)
 {
 	printf("Multiply and print:\n");

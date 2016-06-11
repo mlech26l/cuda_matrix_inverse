@@ -30,7 +30,7 @@ void inverse_gpu(float * in, int size, float * out, int * success){
 		//todo, there was a check for the possibility to invert here before (row swap), should be brought back adventually
 
 		//scale the row so that [i][i] == 1
-		divide_2rows_gpu<<<size/32 + 1,32>>>(i*size + i,d_in + i*size, d_out + i*size, size);
+		divide_2rows_gpu<<<size/32 + 1,32>>>(i*size + i,d_in , d_in + i*size, d_out + i*size, size);
 		//zero out the column below
 		zero_out_column_gpu<<<size/32 + 1,32>>>(i, 1, d_in, d_out, size);
 	}
@@ -53,7 +53,7 @@ void zero_out_column_gpu(int column, int direction, float * in, float * out, int
 	int idx = blockIdx.x*blockDim.x  + threadIdx.x;
 	if(idx < size){
 		int j;
-		for(j = column + direction; j < size; j++){
+		for(j = column + direction; j < size && j >= 0; j+= direction){
 
 			float scale = in[j*size + column];
 			out[idx + j*size] = out[idx+j*size] - (out[idx + column*size] * scale);
@@ -62,16 +62,48 @@ void zero_out_column_gpu(int column, int direction, float * in, float * out, int
 	}
 }
 
+__global__
+void subtract_rows_gpu(int i, float * in, float * out, int size){
+	int idx = blockIdx.x*blockDim.x  + threadIdx.x;
+	if(idx < size){
+		int j;
+		for(j = i + 1; j < size; j++){
+
+			float scale = in[j*size + i];
+			out[idx + j*size] = out[idx+j*size] - (out[idx + i*size] * scale);
+			in[idx + j*size] = in[idx+j*size] - (in[idx + i*size] * scale);
+		}
+	}
+}
+
 
 //takes vector[denominator_idx] as index and divides all elements in the row from vector and vector2
 __global__
-void divide_2rows_gpu(int denominator_idx,float * vector, float * vector2, int size){
+void divide_2rows_gpu(int denominator_idx, float * denom_src_vec, float * vector, float * vector2, int size){
 	int idx = blockIdx.x*blockDim.x  + threadIdx.x;
-	float denominator = vector[denominator_idx];
+	float denominator = denom_src_vec[denominator_idx];
 
 	__syncthreads();
 	if(idx < size){
 		vector[idx] = vector[idx]/denominator;
 		vector2[idx] = vector2[idx]/denominator;
+	}
+}
+
+__global__
+void subtract_row_gpu(float * source, float * target, float scale, int size){
+	int idx = blockIdx.x*blockDim.x  + threadIdx.x;
+	if(idx < size){
+		target[idx] = target[idx] - (source[idx] * scale);
+	}
+}
+
+__global__
+void divide_row_gpu(int denominator_idx, float * denom_src_vec, float * vector, int start_idx, int size){
+	int idx = blockIdx.x*blockDim.x  + threadIdx.x;
+	float denominator = denom_src_vec[denominator_idx];
+	__syncthreads();
+	if(idx < size){
+		vector[idx + start_idx] = vector[idx + start_idx]/denominator;
 	}
 }
