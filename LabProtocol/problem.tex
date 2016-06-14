@@ -1,0 +1,28 @@
+% !TEX root =  root.tex
+
+
+\section{PROBLEM STATEMENT}\label{sec:problem}
+First we will repeat some mathematical definitions for the sake of completeness.
+\begin{definition}
+	\textbf{Inverse Matrix}
+	Let $A \in \mathbb{R}^n \times \mathbb{R}^n$ and $I_n$ be the identity matrix of dimension $n$, then the matrix $A^{-1} \in \mathbb{R}^n \times \mathbb{R}^n$ is called \textbf{inverse matrix} of $A$ if and only if
+	\[A \cdot A^{-1} = I_n\]
+\end{definition}
+A quadratic matrix $A$ is called \emph{regular} if there exists a inverse matrix of $A$. If there exists no inverse of $A$ then $A$ is called \emph{singular}.\\
+Inverse matrices can be though to find, but have various of different uses especially in control theory to describe linear systems.  
+\vspace{0.2cm}\\
+There are a lot of ways to compute the inverse of a matrix, we will introduce some of the most common ones.\\
+\textbf{Gaussian-Elimination}\\
+TODO: Add definition of gauss
+\vspace{0.2cm}\\
+\textbf{Inversion by adjugate matrix}\\
+The inverse $A^{-1}$ of $A$ can be computed by:
+\begin{equation}
+	A^{-1}_{i,j} := \frac{1}{\text{det}(A)} \text{adj}_{i,j}(A)
+\end{equation}
+with
+\begin{definition}
+	\textbf{Adjugate matrix} Let $M_{i,j}$ be the matrix $A$ where the $i$-th row and the $j$-th column are removed. Then:
+	\[ \text{\textnormal{adj}}_{i,j}(A) = (-1)^{i+j} \text{\textnormal{det}}(M_{j,i}) \]
+\end{definition}
+This way of inverting a matrix works well for small $n$ (especially if $n \leq 3$), because the determinant is easy to compute in these cases.\\

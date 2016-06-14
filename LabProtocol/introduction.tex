@@ -10,15 +10,12 @@
 %\IEEEraisesectionheading{
 \section{Introduction}\label{sec:introduction}
 %}
-
-Write an introduction with the problem statement 
-and what is your contribution.
-
-
-
-The rest of the paper is organized as follows.  In Section~\ref{sec:related} 
-blah blah .  In Section~\ref{sec:system} blah blah We conclude  .... blah 
-Section~\ref{sec:conclusion}.
+Enormous improvements in the performance of \emph{Graphics Processing Units} (GPUs) driven by the video game market have made GPUs interesting for scientific computations. \\
+The massive parallel paradigm of such processors poses new challenges on the software developers in order to make use of all the hardware resources. The Khronos Group specified the OpenCL programming language \footnote{\url{https://www.khronos.org/opencl/}} to deal with the parallelism. With the \emph{Compute Unified Device Architecture} \footnote{\url{https://developer.nvidia.com/cuda-zone}} (short CUDA) Nvidia launched its own programming language and environment for its Geforce GPUs and Tesla computation cards. \\
+In this paper we will use the problem of matrix inversion as an example  for optimizing algorithms for CUDA.
+\vspace{0.3cm}\\
+The rest of the paper is organized as follows.  In Section~\ref{sec:problem} we will state the problem of inverting a matrix. In Section~\ref{sec:methods} we are going to describe our approach of implementing and verifying the algorithm for CUDA.\\
+In Section~\ref{sec:results} we compare the performance of the parallel algorithm running on various of CUDA devices to a serial version of the algorithm running on modern x64 instruction set CPUs.  In Section~\ref{sec:related} related works and further readings are listed. Finally we will draw our conclusion in Section~\ref{sec:conclusion}.
 
 
 
