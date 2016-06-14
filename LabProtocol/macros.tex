@@ -1,0 +1,38 @@
+% GENERIC MATH MACROS
+%\newcommand{\eventually}{\Diamond}
+%\newcommand{\henceforth}{\Box}
+\newcommand{\tuple}[1]{\langle #1\rangle}
+\newcommand{\sat}{\models}
+% \pr(X) = probability of X.  it's probably a good idea to use same font
+% for \pr and \Peek.
+\newcommand{\pr}{{\it P}}
+\newcommand{\Peek}{{\it Peek}}
+\newcommand{\comment}[1]{}
+
+% \fullOnly{material that appears in tech report but not conference paper}
+\newcommand{\fullOnly}[1]{}
+%\newcommand{\fullOnly}[1]{#1}
+
+% \confOnly{material that appears in conference paper but not tech report}
+%\newcommand{\confOnly}[1]{}
+\newcommand{\confOnly}[1]{#1}
+
+% DOCUMENT-SPECIFIC MACROS
+% observation symbol representing a gap
+\newcommand{\gap}{{\it gap}}
+% random variable representing the result of a peek operation.
+% use regular font not \mathbf, i.e., assume a single variable,
+% otherwise it looks odd, because X, O, and S are single variables.
+\newcommand{\pkvar}{Q}
+% meta-variable representing a value returned by a peek operation,
+% i.e., a value of \pkvar.
+\newcommand{\pk}{q}
+
+% \sampled{O} = sampled version of trace O
+%\newcommand{\samp}[1]{\check{#1}}
+%\newcommand{\samp}[1]{{\rm samp}(#1)}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "main"
+%%% End: 
