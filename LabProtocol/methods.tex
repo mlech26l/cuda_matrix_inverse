@@ -3,6 +3,27 @@
 
 \section{METHODS}
 \label{sec:methods}
+\subsection*{Verification}
+To verify if a matrix $A$ was inverted correctly one has to check if equation (\ref{eq:inverse}) holds. So our implementation also requires functions to multiply two matrices and check if a matrix is equal to the identity matrix. Ideally these procedures are also done using CUDA.\\
+Lastly we need test matrices to run our implementation. One solution might be to read them from a file, another would be to generate the matrices randomly. We choose the latest because this way we can make use of CUDA again, in form of the cuRAND \footnote{\url{https://developer.nvidia.com/curand}} library for random number generation. So all in all our implementation will consists of the steps listed in figure (\ref{fig:steps})
+
+\begin{figure}
+\begin{tikzpicture}
+	\node (entry) at (0,-0.5) [draw=none,rectangle]  {};
+	\node (curand) at (0,-2) [draw,rectangle,fill=blue!10,align=center,minimum width=5cm, minimum height=1.2cm] {Generate random matrix\\using cuRAND};
+	\node (inversion) at (0,-4) [draw,rectangle,fill=blue!10,align=center,minimum width=5cm, minimum height=1.2cm] {Invert matrix};
+	\node (multiply) at (0,-6) [draw,rectangle,fill=blue!10,align=center,minimum width=5cm, minimum height=1.2cm] {Multiply $A$ with $A^{-1}$\\using shared memory algorithm};
+	\node (check) at (0,-8) [draw,rectangle,fill=blue!10,align=center,minimum width=5cm, minimum height=1.2cm] {Check if equal to identity matrix\\using reduction} ;
+	\draw[-triangle 60] (entry) to (curand);
+	\draw[-triangle 60] (curand) to (inversion);
+	\draw[-triangle 60] (inversion) to (multiply);
+	\draw[-triangle 60] (multiply) to (check);
+	
+\end{tikzpicture}
+\centering
+\label{fig:steps}
+\caption{Steps done by our implementation}
+\end{figure}
 
 
 
