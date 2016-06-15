@@ -28,3 +28,8 @@ with
 	\[ \text{\textnormal{adj}}_{i,j}(A) = (-1)^{i+j} \text{\textnormal{det}}(M_{j,i}) \]
 \end{definition}
 This way of inverting a matrix works well for small $n$ (especially if $n \leq 3$), because the determinant is easy to compute in these cases.\\
+
+\subsection*{CUDA terminology}
+In the following the term \emph{host} refers to program code that is executed on the CPU. On the other hand is the term \emph{device} used to refer to program code that is executed on the GPU or computation card.\\
+A \emph{kernel} is a function that can be executed on the device.
+
