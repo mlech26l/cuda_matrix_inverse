@@ -123,7 +123,7 @@ void test_gpu_pivoting(void){
   printf("**** GPU pivoting test finished! ****\n\n");
   exit(EXIT_SUCCESS);
 }
-void test_matrix_mathias_functions(void)
+void test_matrix_mathias_functions(int n)
 {
   /* 100MB Matrix (5000x5000) take 4min to invert on GPU (GT 525m, with 96 threads)
   vs 28 min on a Intel i5 2430m core (= 7 x speedup)
@@ -132,11 +132,8 @@ void test_matrix_mathias_functions(void)
   //test_gpu_pivoting();
 	float *d_mat, *d_inv, *d_mat2;
 	float *h_mat, *h_inv;
-	int n = 6;
 
-	printf("Enter matrix dim: ");
-	scanf("%d",&n);
-	printf("\nDoing matrix inversion test with n=%d\n",n);
+	printf("\nDoing LU matrix inversion test with n=%d\n",n);
 
 
 	d_mat = generate_random_matrix(n,100,1);
