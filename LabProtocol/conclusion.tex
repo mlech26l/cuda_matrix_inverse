@@ -3,4 +3,4 @@
 \section{CONCLUSION}
 \label{sec:conclusion}
 
-GPGPU computing can be used to speed up matrix inversion for medium to large matrices, for small matrices the overhead of passing data back and forth between the host and the GPU is bigger than just running the inversion on the CPU.
+GPGPU computing can be used to speed up matrix inversion for medium to large matrices, for small matrices the overhead of passing data back and forth between the host and the GPU is bigger than just running the inversion on the CPU. The observed speed up increases with data size but would likely stop when limits of the GPU is reached. But the there where problems implementing the code in CUDA with errors which where very difficult to debug, even with the cuda tools such as cuda-gdb and cuda-memcheck.
