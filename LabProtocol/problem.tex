@@ -21,8 +21,6 @@ The operations of transforming A into the identity matrix is divided into steps,
 While doing forward elimination, row operations is performed on the matrix so that the diagonal is 1 and that every element below is zero.
 Backward elimination is performing row operations so that all elements above the diagonal is zero.
 
-
-\vspace{0.2cm}\\
 \subsection*{Inversion by adjugate matrix}
 The inverse $A^{-1}$ of $A$ can be computed by:
 \begin{equation}
@@ -34,6 +32,8 @@ with
 	\[ \text{\textnormal{adj}}_{i,j}(A) = (-1)^{i+j} \text{\textnormal{det}}(M_{j,i}) \]
 \end{definition}
 This way of inverting a matrix works well for small $n$ (especially if $n \leq 3$), because the determinant is easy to compute in these cases.\\
+\subsection*{LU decomposition}
+
 
 \subsection*{CUDA terminology}
 In the following the term \emph{host} refers to program code that is executed on the CPU. On the other hand is the term \emph{device} used to refer to program code that is executed on the GPU or computation card.\\
