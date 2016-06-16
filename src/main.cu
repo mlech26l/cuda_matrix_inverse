@@ -33,7 +33,7 @@ void jakobs_test_suite(int n);
 
 void print_usage(char *progname)
 {
-  fprintf(stderr, "Usage: %s [-d deviceID] [-j] n\n",
+  fprintf(stderr, "\nUsage: %s [-d deviceID] [-g] [-n size]\n",
           progname);
 }
 void run_matrix_inversion_test(int n, int use_gauss);
