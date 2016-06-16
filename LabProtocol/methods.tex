@@ -42,4 +42,11 @@ is\_id(A) := \begin{cases}
 \end{cases}
 \end{equation*}
 So $is\_id$ maps a matrix of $\mathbb{R}^{n \times n}$ to a single value $\{0,1 \}$. Therefore a implementation of $is\_id$ can be done efficiently using a \textbf{reduction}.  \\
-We adapted the code from the CUDA 7.5 samples directory, namely from \texttt{/samples/6\_Advanced/reduction/}. The sample code is based on the whitepaper from Harris \cite{Harris2010} and optimizes the reduction for a summation of an array.
+We adapted the code from the CUDA 7.5 samples directory, namely from \texttt{/samples/6\_Advanced/reduction/}. The sample code is based on the whitepaper from Harris \cite{Harris2010} and optimizes the reduction for a summation of an array. The modification we did was that instead of summing up all array entries we used a auxiliary function $f_{acc}$ which takes an entry and its index as input and is returns 1 if  the value and the index to not match with the definition of the identity matrix. Formally:
+\begin{equation}
+f_{acc}(A_{i,j}) := \begin{cases} 1 & \text{if }i = j \text{ and } |A_{i,j}-1| \geq \varepsilon\\
+1 & \text{if } i \neq j \text{ and } |A_{i,j}| \geq \varepsilon\\
+0 & \text{otherwise}	\end{cases}
+\end{equation}
+Note that due to the limited floating point representation, a rounding error variable $\varepsilon$ must be chosen that should be close to 0, e.g. $\varepsilon = 10^{-6}$. \\
+Our modified reduction computes $\sum_{i=0,j=0}^{n,n} f_{acc}(A_{i,j})$, so if the matrix $A$ matches the definition of the identity matrix the sum will be 0, if at least one entry of the matrix does not match the definition of the identity matrix, then the sum will be greater than 0.
