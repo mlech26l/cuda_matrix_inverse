@@ -140,7 +140,7 @@ void matrix_multiply(float* C, float* A, float* B, int n)
 	dim3 dimGrid(divup(n,dimBlock.x), divup(n,dimBlock.y));
 
 
-	printf("Launching Multiplication grid <<%d, %d>, <%d, %d>>\n",dimGrid.x,dimGrid.y,dimBlock.x,dimBlock.y);
+	// printf("Launching Multiplication grid <<%d, %d>, <%d, %d>>\n",dimGrid.x,dimGrid.y,dimBlock.x,dimBlock.y);
 
 	// Launch kernel
 	matrixMulCUDA<MULTIPLY_BLOCK_SIZE><<<dimGrid, dimBlock>>>(C, A, B, n);

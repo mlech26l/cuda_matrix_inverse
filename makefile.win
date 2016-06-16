@@ -1,34 +1,44 @@
 # Sample makefile
 
 lib = -lcurand
-ccopt =  -G -arch sm_20 -ccbin "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin"
-
+ccopt = -O3 -arch sm_20 -ccbin "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin"
+CC = nvcc
 all: bin/matrix.exe
 
-bin/matrix.exe: obj/main.obj obj/lup_decomposition.obj obj/matrix_gpu.obj obj/random_matrix.obj obj/matrix_multiplication.obj obj/unity_matrix.obj obj/matrix.obj
+bin/matrix.exe: obj/main.obj obj/device_query.obj obj/testing_util.obj obj/gpu_enabled.obj obj/gpu_pivoting.obj obj/matrix_gpu.obj obj/random_matrix.obj obj/matrix_multiplication.obj obj/identity_matrix.obj obj/matrix.obj
 	nvcc -o $@ $(lib) $(ccopt) $^
 
-obj/lup_decomposition.obj: src/lup_decomposition.cu
-	nvcc -c -o $@ $(lib) $(ccopt) $^
-	
-obj/unity_matrix.obj: src/unity_matrix.cu
-	nvcc -c -o $@ $(lib) $(ccopt) $^
 
-obj/random_matrix.obj: src/random_matrix.cu
+obj/identity_matrix.obj: src/identity_matrix.cu
 	nvcc -c -o $@ $(lib) $(ccopt) $^
 
 obj/matrix_multiplication.obj: src/matrix_multiplication.cu
 	nvcc -c -o $@ $(lib) $(ccopt) $^
-	
+
+obj/testing_util.obj: src/testing_util.cu
+	$(CC) -c -o $@ $(lib) $(ccopt) $^
+
+obj/random_matrix.obj: src/random_matrix.cu
+	nvcc -c -o $@ $(lib) $(ccopt) $^
+
+obj/device_query.obj: src/device_query.cu
+	nvcc -c -o $@ $(lib) $(ccopt) $^
+
+obj/gpu_pivoting.obj: src/gpu_pivoting.cu
+	nvcc -c -o $@ $(lib) $(ccopt) $^
+
+obj/gpu_enabled.obj: src/gpu_enabled.cu
+	nvcc -c -o $@ $(lib) $(ccopt) $^
+
 obj/main.obj: src/main.cu
 	nvcc -c -o $@ $(lib) $(ccopt) $^
-		
+
 obj/matrix.obj: src/matrix.cu
 	nvcc -c -o $@ $(lib) $(ccopt) $^
-		
+
 obj/matrix_gpu.obj: src/matrix_gpu.cu
 	nvcc -c -o $@ $(lib) $(ccopt) $^
-	
+
 clean:
 	del obj\*.obj
 	del bin\matrix.exe

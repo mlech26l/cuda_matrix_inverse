@@ -1,4 +1,4 @@
-#include "unity_matrix.h"
+#include "identity_matrix.h"
 
 #include<math.h>
 #include<stdio.h>
@@ -15,7 +15,7 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
 
 /* Sets the diagonal to 1 */
 __global__
-void unity(int n, float *mat)
+void identity(int n, float *mat)
 {
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
 	int j = blockIdx.y * blockDim.y + threadIdx.y;
@@ -43,9 +43,9 @@ void setzero(int n, float *mat)
 }
 
 /* Accumulate function checks if current value and position matches to the definition
- of the unity matrix, i.e. 1s in the diagonal, 0s elsewhere.
+ of the identity matrix, i.e. 1s in the diagonal, 0s elsewhere.
  Returns 0 if value and position matches,
- returns 1 if there is a conflict, i.e. matrix is not unity matrix */
+ returns 1 if there is a conflict, i.e. matrix is not identity matrix */
 __device__
 void accumulate(float mat, int i, int n, int &ret)
 {
@@ -65,8 +65,8 @@ void accumulate(float mat, int i, int n, int &ret)
 	}
 }
 
-/* Allocates unity matrix of dimension n by n on the device */
-float* get_dev_unity_matrix(int n)
+/* Allocates identity matrix of dimension n by n on the device */
+float* get_dev_identity_matrix(int n)
 {
 	int size = n*n;
 
@@ -101,7 +101,7 @@ float* get_dev_unity_matrix(int n)
 	setzero<<<numBlocks, threadsPerBlock>>>(n, d_mat);
 
 	// Set the elements in the diagonal to 1
-	unity<<<numBlocks, threadsPerBlock>>>(n, d_mat);
+	identity<<<numBlocks, threadsPerBlock>>>(n, d_mat);
 
 	return d_mat;
 
@@ -171,7 +171,6 @@ reduce6(float *g_idata, int *g_odata, int size, int n)
 			int acc2=0;
 			accumulate(g_idata[i+blockSize], i+blockSize, n, acc2);
 			mySum += acc2;
-            mySum += acc2;
 		}
 
         i += gridSize;
@@ -375,7 +374,7 @@ void reduce(int n, int threads, int blocks, float *d_idata, int *d_odata)
 	}
 }
 
-int is_unity_matrix(float* d_mat, int n)
+int is_identity_matrix(float* d_mat, int n)
 {
 	// Allocate memory for partial results
 	int *d_sum;
@@ -387,6 +386,11 @@ int is_unity_matrix(float* d_mat, int n)
 	// Define grid
 	int numBlocks=4;
 	int numThreads = 32;
+
+  //getNumBlocksAndThreads(int whichKernel, int n, int maxBlocks, int maxThreads, int &blocks, int &threads)
+  getNumBlocksAndThreads(6, n*n, 100, 32, numBlocks, numThreads);
+
+
 	// Launches kernel
 	reduce(n, numThreads, numBlocks, d_mat, d_sum);
 
@@ -406,6 +410,6 @@ int is_unity_matrix(float* d_mat, int n)
 	// Free allocated resources
 	cudaFree(d_sum);
 	free(h_sum);
-	
+
 	return !ret;
 }

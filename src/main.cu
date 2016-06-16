@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-#include <sys/time.h>
 
 #include <cuda_runtime_api.h>
 #include <cuda.h>
@@ -12,12 +11,13 @@
 #include <curand_kernel.h>
 
 
+#include "device_query.h"
+#include "testing_util.h"
 #include "random_matrix.h"
-#include "unity_matrix.h"
+#include "identity_matrix.h"
 #include "matrix_multiplication.h"
 #include "matrix.h"
 #include "matrix_gpu.h"
-#include "lup_decomposition.h"
 
 
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
@@ -30,13 +30,13 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
    }
 }
 void jakobs_test_suite(int n);
-static void multiply_and_print(float* A, float* Ainv, int n);
-
-// Function for testing the matrix multiplication and check for unity matrix
-void test_matrix_util_functions(void);
 
 int main(int argc, char **argv)
 {
+  printf("CUDA Matrix inversion program - by Jakob and Mathias\n\n");
+
+  query_devices();
+
 	if(argc > 1){
 		if(!strcmp(argv[1],"-j")){ //this is so that nobody removes the gpu test again.. don't touch this.
 			int n = 3;
@@ -46,7 +46,7 @@ int main(int argc, char **argv)
 			return 0;
 		}
 	}
-	test_matrix_util_functions();
+	test_matrix_mathias_functions();
 	exit(EXIT_SUCCESS);
 }
 
@@ -95,7 +95,9 @@ int is_equal(float * a, float * b, int size){
 void jakobs_test_suite(int n){
 	printf("running Jakobs tests.\n");
 
-	struct timeval start, end, res;
+  cudaEvent_t start, stop;
+  cudaEventCreate(&start);
+  cudaEventCreate(&stop);
 
 	float *matrix;
 	float * matrix_org;
@@ -134,16 +136,18 @@ void jakobs_test_suite(int n){
 
 	int succ=0;
 	{
-		gettimeofday(&start, NULL);
+		cudaEventRecord(start);
+    cudaEventSynchronize(start);
 
 
 		//running cpu test first because it has singularity check.
 		//inversion destroys the matrix
 		inverse_cpu(matrix, n, inverse_matrix_cpu, &succ);
 
-		gettimeofday(&end, NULL);
-		timersub(&end, &start, &res);
-		double time = (float)res.tv_usec / 1000000 + (float)res.tv_sec;
+    cudaEventRecord(stop);
+    cudaEventSynchronize(stop);
+    float time = 0;
+    cudaEventElapsedTime(&time, start, stop);
 		printf("CPU inverse took seconds: %f\n", time);
 	}
 
@@ -159,13 +163,22 @@ void jakobs_test_suite(int n){
 	}
 
 	{
-		gettimeofday(&start, NULL);
+    cudaEventDestroy(start);
+    cudaEventDestroy(stop);
 
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+    cudaEventRecord(start);
+    cudaEventSynchronize(start);
 		inverse_gpu(matrix, n, inverse, &succ);
 
-		gettimeofday(&end, NULL);
-		timersub(&end, &start, &res);
-		double time = (float)res.tv_usec / 1000000 + (float)res.tv_sec;
+    cudaEventRecord(stop);
+    cudaEventSynchronize(stop);
+    float time = 0;
+    cudaEventElapsedTime(&time, start, stop);
+    cudaEventDestroy(start);
+    cudaEventDestroy(stop);
+
 		printf("CUDA inverse took seconds: %f\n", time);
 	}
 
@@ -188,119 +201,4 @@ void jakobs_test_suite(int n){
 	free(matrix_org);
 	free(inverse);
 	free(inverse_matrix_cpu);
-}
-
-void test_matrix_util_functions(void)
-{
-	float *h_mat, *d_mat;
-	int n = 6;
-	printf("Enter matrix dim: ");
-	scanf("%d",&n);
-	printf("\nDoing matrix inversion test with n=%d\n",n);
-
-	/* Allocate n floats on host */
-	h_mat = (float *)malloc(n*n* sizeof(float));
-	float* h_inv = create_identity_matrix(n);
-	/* Allocate n floats on device */
-
-	d_mat = generate_random_matrix(n,100,1);
-
-	/* Copy random matrix to host */
-	gpuErrchk(cudaMemcpy(h_mat, d_mat, n*n * sizeof(float), cudaMemcpyDeviceToHost))
-
-	/* Print out random generated matrix */
-	printf("Random generated Matrix:\n");
-	for(int x = 0; x < n; x++) {
-		for(int y = 0; y < n; y++) {
-			printf("%1.4f ", h_mat[x*n + y]);
-		}
-		printf("\n");
-	}
-	printf("WA output form:\n");
-	printf("inverse {");
-	for(int x = 0; x < n; x++) {
-		printf("{");
-		for(int y = 0; y < n; y++) {
-			printf("%1.0f", h_mat[x*n + y]);
-			if(y != n-1)
-				printf(",");
-		}
-		printf("}");
-		if(x != n-1)
-			printf(",");
-	}
-	printf("}\n");
-
-	int succ=0;
-	inverse_cpu(h_mat, n, h_inv, &succ);
-	if(!succ)
-	{
-		printf("Matrix singular!");
-		exit(EXIT_SUCCESS);
-	}
-	/* Copy random matrix to host for checking */
-	gpuErrchk(cudaMemcpy(h_mat, d_mat, n*n * sizeof(float), cudaMemcpyDeviceToHost))
-	// multiply_and_print(h_mat,h_inv,n);
-
-	/* Print out inverse matrix */
-	printf("Inverse Matrix:\n");
-	for(int x = 0; x < n; x++) {
-		for(int y = 0; y < n; y++) {
-			printf("%1.4f ", h_inv[x*n + y]);
-		}
-		printf("\n");
-	}
-
-	/* Allocate second matrix on device for multiplication */
-	float *d_inv;
-	gpuErrchk(cudaMalloc((void **)&d_inv, n*n* sizeof(float)))
-
-	float *d_identity;
-	gpuErrchk(cudaMalloc((void **)&d_identity, n*n* sizeof(float)))
-
-	/* Copy inverse matrix to device */
-	gpuErrchk(cudaMemcpy(d_inv, h_inv, n*n * sizeof(float), cudaMemcpyHostToDevice))
-
-	/* Multiply matrix with inverse */
-	matrix_multiply(d_identity,d_mat,d_inv,n);
-
-	/* Copy random matrix to host */
-	gpuErrchk(cudaMemcpy(h_inv, d_identity, n*n * sizeof(float), cudaMemcpyDeviceToHost))
-	/* Print out identity matrix */
-	printf("Identity Matrix:\n");
-	for(int x = 0; x < n; x++) {
-		for(int y = 0; y < n; y++) {
-			printf("%1.4f ", h_inv[x*n + y]);
-		}
-		printf("\n");
-	}
-
-
-	int ur = is_unity_matrix(d_identity,n);
-	if(ur)
-		printf("SUCCESS! Matix inversion was successfull!!!!!\n");
-	else
-		printf("FAILED! Matrix inversion not successfull\n");
-
-	free(h_mat);
-	cudaFree(d_mat);
-	cudaFree(d_inv);
-}
-
-static void multiply_and_print(float* A, float* Ainv, int n)
-{
-	printf("Multiply and print:\n");
-	for(int x = 0; x < n; x++) {
-		for(int y = 0; y < n; y++) {
-			float sum=0;
-			for(int k=0;k<n;k++)
-			{
-				sum+= A[x*n+k]*Ainv[k*n+y];
-			}
-			printf("%1.3f",sum);
-			if(y!= n-1)
-				printf(", ");
-		}
-		printf("\n");
-	}
 }
