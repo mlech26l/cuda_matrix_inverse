@@ -1,23 +1,58 @@
 % !TEX root =  root.tex
 
 \section{RESULTS}\label{sec:results}
-Doing LU matrix inversion test with n=100
-Decomposing into LU...[OK] (in 4.059 ms)
-Inverting LU matrix...[OK] (in 4.111 ms)
-Decompose LU on host...[OK] (in 4.603 ms)
-Inverting matrix on host...[OK] (in 5.893 ms)
 
+\begin{tabular}{|l|c|}
+	\hline
+	matrix dim size [n] & 100 \\
+	\hline
+	Decomposing into LU CUDA & 4.059 ms \\
+	Inverting LU matrix CUDA & 4.111 ms \\
+	\hline
+	Decomposing into LU host & 4.603 ms \\
+	Inverting LU matrix host & 5.893 ms \\		
+	\hline
+\end{tabular}
 
+%Doing LU matrix inversion test with n=100
+%Decomposing into LU...[OK] (in 4.059 ms)
+%Inverting LU matrix...[OK] (in 4.111 ms)
+%Decompose LU on host...[OK] (in 4.603 ms)
+%Inverting matrix on host...[OK] (in 5.893 ms)
 
-Doing LU matrix inversion test with n=1000
-Decomposing into LU...[OK] (in 201.610 ms)
-Inverting LU matrix...[OK] (in 548.012 ms)
-Decompose LU on host...[OK] (in 4252.740 ms)
-Inverting matrix on host...[OK] (in 5675.450 ms)
+\begin{tabular}{|l|c|}
+	\hline
+	matrix dim size [n] & 1000 \\
+	\hline
+	Decomposing into LU CUDA & 201.610  ms \\
+	Inverting LU matrix CUDA & 548.012 ms \\
+	\hline
+	Decomposing into LU host & 4252.740 ms \\
+	Inverting LU matrix host & 5675.450 ms \\		
+	\hline
+\end{tabular}
 
-Doing LU matrix inversion test with n=5000
-Decomposing into LU...[OK] (in 21650.590 ms)
-Inverting LU matrix...[OK] (in 28592.746 ms)
-Decompose LU on host...[OK] (in 536107.000 ms)
-Inverting matrix on host...[OK] (in 790386.812 ms)
+%Doing LU matrix inversion test with n=1000
+%Decomposing into LU...[OK] (in 201.610 ms)
+%Inverting LU matrix...[OK] (in 548.012 ms)
+%Decompose LU on host...[OK] (in 4252.740 ms)
+%Inverting matrix on host...[OK] (in 5675.450 ms)
+
+\begin{tabular}{|l|c|}
+	\hline
+	matrix dim size [n] & 5000 \\
+	\hline
+	Decomposing into LU CUDA & 21650.590 ms\\
+	Inverting LU matrix CUDA & 28592.746 ms\\
+	\hline
+	Decomposing into LU host & 536107.000 ms\\
+	Inverting LU matrix host & 790386.812 ms\\		
+	\hline
+\end{tabular}
+
+%Doing LU matrix inversion test with n=5000
+%Decomposing into LU...[OK] (in 21650.590 ms)
+%Inverting LU matrix...[OK] (in 28592.746 ms)
+%Decompose LU on host...[OK] (in 536107.000 ms)
+%Inverting matrix on host...[OK] (in 790386.812 ms)
 
