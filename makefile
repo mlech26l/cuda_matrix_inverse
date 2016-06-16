@@ -42,7 +42,9 @@ obj/matrix.obj: src/matrix.cu
 obj/matrix_gpu.obj: src/matrix_gpu.cu
 	$(CC) -c -o $@ $(lib) $(ccopt) $^
 
-
+obj/identity_matrix.obj: src/identity_matrix.cu
+	$(CC) -c -o $@ $(lib) $(ccopt) $^
+	
 clean:
 	rm obj/*.obj
 	rm bin/matrix.exe

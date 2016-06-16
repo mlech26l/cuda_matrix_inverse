@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include "matrix_gpu.h"
+#include "testing_util.h"
 
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
 inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
@@ -39,6 +40,7 @@ void inverse_gpu(float * in, int size, float * out, int * success){
 	int column;
 	for(column = size - 1; column >= 1; column--){
 		zero_out_column_gpu<<<size/32 + 1,32>>>(column, -1, d_in, d_out, size);
+		print_matrix_on_device_kernel<<<1,1>>>(d_in, size);
 	}
 
 	//get the inverted matrix back to host memory
