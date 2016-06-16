@@ -18,7 +18,7 @@
 #include "matrix_multiplication.h"
 #include "matrix.h"
 #include "matrix_gpu.h"
-
+#include "wingetopt.h"
 
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
 inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
@@ -31,25 +31,53 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
 }
 void jakobs_test_suite(int n);
 
+void print_usage(char *progname)
+{
+  fprintf(stderr, "Usage: %s [-d deviceID] [-j] n\n",
+          progname);
+}
+void run_matrix_inversion_test(int n, int use_gauss);
 int main(int argc, char **argv)
 {
   printf("CUDA Matrix inversion program - by Jakob and Mathias\n\n");
+  int opt;
+  int deviceID=0;
+  int n=100;
+  int use_gauss=0;
 
-  query_devices();
+  while ((opt = getopt(argc, argv, "gn:d:")) != -1) {
+          switch (opt) {
+          case 'n':
+              n = atoi(optarg);
+              break;
+          case 'd':
+              deviceID = atoi(optarg);
+              break;
+          case 'g':
+              use_gauss=1;
+              break;
+          default: /* '?' */
+              print_usage(argv[0]);
+              exit(EXIT_FAILURE);
+          }
+      }
+  if(n<= 0)
+  {
+    print_usage(argv[0]);
+    exit(EXIT_FAILURE);
+  }
+  query_devices(deviceID);
 
-	if(argc > 1){
-		if(!strcmp(argv[1],"-j")){ //this is so that nobody removes the gpu test again.. don't touch this.
-			int n = 3;
-			if(argc > 2)
-				n = atoi(argv[2]);
-			jakobs_test_suite(n);
-			return 0;
-		}
-	}
-	test_matrix_mathias_functions();
+  if(use_gauss)
+  {
+    jakobs_test_suite(n);
+  }
+  else
+  {
+    test_matrix_mathias_functions(n);
+  }
 	exit(EXIT_SUCCESS);
 }
-
 float * create_identity_matrix(int size){
 	float * out = (float *)malloc(sizeof(float)*size*size);
 	int i;

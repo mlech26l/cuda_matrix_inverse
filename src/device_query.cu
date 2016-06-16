@@ -53,7 +53,7 @@ inline int _ConvertSMVer2Cores(int major, int minor)
 // end of GPU Architecture definitions
 
 
-void query_devices(void)
+void query_devices(int devID_selected)
 {
   int deviceCount = 0;
   int dev=0;
@@ -69,12 +69,19 @@ void query_devices(void)
       printf("Detected %d CUDA Capable device(s)\n", deviceCount);
       if(deviceCount>1)
       {
-        printf("Please select device [0...%d]: ",deviceCount-1);
-        scanf("%d",dev);
-        if(dev<0 || dev>= deviceCount)
+        if(devID_selected>=0 && devID_selected<deviceCount)
         {
-          printf("Invalid device ID!\n");
-          exit(EXIT_FAILURE);
+          dev=devID_selected;
+        }
+        else
+        {
+          printf("Please select device [0...%d]: ",deviceCount-1);
+          scanf("%d",&dev);
+          if(dev<0 || dev>= deviceCount)
+          {
+            printf("Invalid device ID!\n");
+            exit(EXIT_FAILURE);
+          }
         }
       }
   }
