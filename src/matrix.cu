@@ -102,8 +102,6 @@ void inverse_cpu(float * in, int size, float * out, int * success){
 	*success = 1;
 }
 
-
-__host__ __device__
 void zero(float f, int * ret){
 	if(abs(f*1e5) < 1){
 		*ret = 1;
@@ -114,7 +112,6 @@ void zero(float f, int * ret){
 }
 
 // in row, out/target row, scale the in row, size
-__host__ __device__
 void subtract_row(float * source, float * target, float scale, int size){
 	int i;
 	for(i = 0;i < size; i++){
@@ -129,22 +126,9 @@ void divide_row(float denominator,float * row, int size){
 	}
 }
 
-
-__host__ __device__
-void divide_row_gpu(float denominator,float * row, int size){
-	int i;
-	for(i = 0;i < size; i++){
-		row[i] = row[i]/denominator;
-	}
-}
-
-
-
 void find_and_swap_up_row(float * a, int row, int size, int * ret){
 	int i;
 	for(i = (row + 1)*size;i < size*size; i++){
-		
-		int * ret = 0;
 		//swap rows
 		zero(a[row*size + i],ret);
 		if(*ret == 0){
