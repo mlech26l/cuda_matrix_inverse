@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include "matrix_gpu.h"
+#include "matrix.h"
 #include "testing_util.h"
 
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
@@ -41,8 +42,22 @@ void inverse_gpu(float * in, int size, float * out, int * success){
 	//back substitution step
 	int column;
 	for(column = size - 1; column >= 1; column--){
+		if(column == 11){
+			gpuErrchk(cudaMemcpy(out, d_out, size*size*sizeof(float), cudaMemcpyDeviceToHost))
+			cudaDeviceSynchronize();
+			printf("error after this step\n");
+			print_matrix(out, size);
+			printf("\n\n");
+		}
 		zero_out_column_gpu<<<size/32 + 1,32>>>(column, -1, d_in, d_out, size);
 		cudaDeviceSynchronize();
+		if(column == 11){
+			gpuErrchk(cudaMemcpy(out, d_out, size*size*sizeof(float), cudaMemcpyDeviceToHost))
+			cudaDeviceSynchronize();
+			printf("error before this step\n");
+			print_matrix(out, size);
+			printf("\n\n");
+		}
 	}
 
 	//get the inverted matrix back to host memory
@@ -64,6 +79,7 @@ void zero_out_column_gpu(int column, int direction, float * in, float * out, int
 			out[idx + j*size] = out[idx+j*size] - (out[idx + column*size] * scale);
 			__syncthreads();
 			in[idx + j*size] = in[idx+j*size] - (in[idx + column*size] * scale);
+			__syncthreads();
 		}
 	}
 }
@@ -75,9 +91,11 @@ void divide_2rows_gpu(int denominator_idx, float * denom_src_vec, float * vector
 	float denominator = denom_src_vec[denominator_idx];
 
 	__syncthreads();
+
 	if(idx < size){
 		vector[idx] = vector[idx]/denominator;
 		__syncthreads();
 		vector2[idx] = vector2[idx]/denominator;
+		__syncthreads();
 	}
 }
