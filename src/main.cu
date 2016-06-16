@@ -111,13 +111,14 @@ void WAprint(int size_of_one_side, float * matrix){
 //simply check the bit patterns.. hope that the gpu uses the same precision as the cpu
 int is_equal(float * a, float * b, int size){
 	int i;
+	int ret = 1;
 	for(i = 0;i < size;i++){
 		if(abs(a[i] - b[i]) > 0.00001){
 			printf("element %d is not equal. GPU = %f, CPU = %f\n",i,a[i],b[i]);
-			return 0;
+			ret = 0;
 		}
 	}
-	return 1;
+	return ret;
 }
 
 //do not touch this function if you do not really, really, know what you are doing.
