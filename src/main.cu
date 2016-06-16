@@ -113,6 +113,7 @@ int is_equal(float * a, float * b, int size){
 	int i;
 	for(i = 0;i < size;i++){
 		if(abs(a[i] - b[i]) > 0.00001){
+			printf("element %d is not equal. GPU = %f, CPU = %f\n",i,a[i],b[i]);
 			return 0;
 		}
 	}
@@ -176,7 +177,7 @@ void jakobs_test_suite(int n){
     cudaEventSynchronize(stop);
     float time = 0;
     cudaEventElapsedTime(&time, start, stop);
-		printf("CPU inverse took seconds: %f\n", time);
+		printf("CPU inverse took ms: %f\n", time);
 	}
 
 	if(!succ)
@@ -207,7 +208,7 @@ void jakobs_test_suite(int n){
     cudaEventDestroy(start);
     cudaEventDestroy(stop);
 
-		printf("CUDA inverse took seconds: %f\n", time);
+		printf("CUDA inverse took ms: %f\n", time);
 	}
 
 	if(!is_equal(inverse,inverse_matrix_cpu,n*n)){

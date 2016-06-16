@@ -17,7 +17,9 @@ There are a lot of ways to compute the inverse of a matrix, we will introduce so
 \subsection*{Gaussian-Elimination}
 Calculcating the inverse by Gaussian-elemination is done by starting with two matrixes, the matrix A that should be inverted and matrix B which is initialized to the identity matrix. By performing row reductions on matrix A to make it into the identity matrix and copying all operations to matrix B gives that B is the inverse of A when A is the identity matrix.
 
-The operations of transforming A into the identity matrix is divided into steps, forward elimination and backward elimination
+The operations of transforming A into the identity matrix is divided into steps, forward elimination and backward elimination.
+While doing forward elimination, row operations is performed on the matrix so that the diagonal is 1 and that every element below is zero.
+Backward elimination is performing row operations so that all elements above the diagonal is zero.
 
 
 \vspace{0.2cm}\\
