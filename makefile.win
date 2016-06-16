@@ -5,9 +5,11 @@ ccopt = -O3 -arch sm_20 -ccbin "C:\Program Files (x86)\Microsoft Visual Studio 1
 CC = nvcc
 all: bin/matrix.exe
 
-bin/matrix.exe: obj/main.obj obj/device_query.obj obj/testing_util.obj obj/gpu_enabled.obj obj/gpu_pivoting.obj obj/matrix_gpu.obj obj/random_matrix.obj obj/matrix_multiplication.obj obj/identity_matrix.obj obj/matrix.obj
+bin/matrix.exe: obj/main.obj obj/device_query.obj obj/wingetopt.obj obj/testing_util.obj obj/gpu_enabled.obj obj/gpu_pivoting.obj obj/matrix_gpu.obj obj/random_matrix.obj obj/matrix_multiplication.obj obj/identity_matrix.obj obj/matrix.obj
 	nvcc -o $@ $(lib) $(ccopt) $^
 
+obj/wingetopt.obj: src/wingetopt.cu
+		$(CC) -c -o $@ $(lib) $(ccopt) $^
 
 obj/identity_matrix.obj: src/identity_matrix.cu
 	nvcc -c -o $@ $(lib) $(ccopt) $^

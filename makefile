@@ -6,9 +6,11 @@ CC=/usr/local/cuda/bin/nvcc
 
 all: bin/matrix.exe
 
-bin/matrix.exe: obj/main.obj obj/testing_util.obj obj/random_matrix.obj obj/matrix_multiplication.obj  obj/device_query.obj obj/gpu_enabled.obj obj/gpu_pivoting.obj obj/identity_matrix.obj obj/matrix.obj obj/matrix_gpu.obj
+bin/matrix.exe: obj/main.obj obj/testing_util.obj obj/wingetopt.obj obj/random_matrix.obj obj/matrix_multiplication.obj  obj/device_query.obj obj/gpu_enabled.obj obj/gpu_pivoting.obj obj/identity_matrix.obj obj/matrix.obj obj/matrix_gpu.obj
 	$(CC) -o $@ $(lib) $(ccopt) $^
 
+obj/wingetopt.obj: src/wingetopt.cu
+	$(CC) -c -o $@ $(lib) $(ccopt) $^
 
 obj/unity_matrix.obj: src/unity_matrix.cu
 	$(CC) -c -o $@ $(lib) $(ccopt) $^
