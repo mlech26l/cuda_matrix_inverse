@@ -31,5 +31,15 @@ The device API, which can be accessed by \texttt{curand\_kernel.h}, are low leve
 The host API on the other hand, can be access by \texttt{curand.h} and contains high level functions for host code. With the host API, entire arrays can be filled with random numbers using only one API call. \\
 Because a row-major-ordering matrix of dimension $n$ by $n$ is represented as an array of size $n^2$, a random matrix can be generated with only one API call. 
 
+\subsection*{Matrix multiplication using shared memory}
 
-
+\subsection*{Checking if matrix is identity matrix}
+We need a procedure which checks if a given matrix $A$ of dimension $n$-by-$n$ is equal to the identity matrix $I_n$. Formally defined:
+\begin{equation*}
+is\_id(A) := \begin{cases}
+1 & \text{if } A \text{ has 1's in the diagonal, and 0's elsewhere}\\
+0 & \text{otherwise}
+\end{cases}
+\end{equation*}
+So $is\_id$ maps a matrix of $\mathbb{R}^{n \times n}$ to a single value $\{0,1 \}$. Therefore a implementation of $is\_id$ can be done efficiently using a \textbf{reduction}.  \\
+We adapted the code from the CUDA 7.5 samples directory, namely from \texttt{/samples/6\_Advanced/reduction/}. The sample code is based on the whitepaper from Harris \cite{Harris2010} and optimizes the reduction for a summation of an array.
