@@ -4,3 +4,10 @@
 \label{sec:conclusion}
 
 GPGPU computing can be used to speed up matrix inversion for medium to large matrices, for small matrices the overhead of passing data back and forth between the host and the GPU is bigger than just running the inversion on the CPU. The observed speed up increases with data size but would likely stop when limits of the GPU is reached. But the there where problems implementing the code in CUDA with errors which where very difficult to debug, even with the cuda tools such as cuda-gdb and cuda-memcheck.
+
+\section{problems}
+The Gaussian elimination algorithm does not get the same result as the CPU implementation on some matrices, the smallest found is the generated matrix for a 29x29 matrix, the result is close though, ~0.0001 in difference. This behaviour is not observed if the kernel is run in cuda-memcheck. The cause of this is as of now unknown. 
+
+Initially there where a lot of problems with pointers being dereferenced on the wrong platform, mostly sending host pointers to GPU, defining a cuda debug preprocessor script helped a lot with this, so that all memory transferees are warped in this script. 
+
+There where also a lot of out of bounds memory accesses which helped to find and resolve cuda-memchecker.

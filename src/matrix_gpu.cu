@@ -25,7 +25,7 @@ void inverse_gpu(float * in, int size, float * out, int * success){
 
 	gpuErrchk(cudaMemcpy(d_in, in, size*size*sizeof(float), cudaMemcpyHostToDevice))
 	gpuErrchk(cudaMemcpy(d_out, out, size*size*sizeof(float), cudaMemcpyHostToDevice))
-
+	cudaDeviceSynchronize();
 	//Gaussian elimination step
 	int i;
 	for(i = 0; i < size; i++){
@@ -42,22 +42,22 @@ void inverse_gpu(float * in, int size, float * out, int * success){
 	//back substitution step
 	int column;
 	for(column = size - 1; column >= 1; column--){
-		if(column == 11){
+		/*if(column == 11){
 			gpuErrchk(cudaMemcpy(out, d_out, size*size*sizeof(float), cudaMemcpyDeviceToHost))
 			cudaDeviceSynchronize();
 			printf("error after this step\n");
 			print_matrix(out, size);
 			printf("\n\n");
-		}
+		}*/
 		zero_out_column_gpu<<<size/32 + 1,32>>>(column, -1, d_in, d_out, size);
 		cudaDeviceSynchronize();
-		if(column == 11){
+		/*if(column == 11){
 			gpuErrchk(cudaMemcpy(out, d_out, size*size*sizeof(float), cudaMemcpyDeviceToHost))
 			cudaDeviceSynchronize();
 			printf("error before this step\n");
 			print_matrix(out, size);
 			printf("\n\n");
-		}
+		}*/
 	}
 
 	//get the inverted matrix back to host memory
