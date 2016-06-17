@@ -32,6 +32,54 @@ The host API on the other hand, can be access by \texttt{curand.h} and contains 
 Because a row-major-ordering matrix of dimension $n$ by $n$ is represented as an array of size $n^2$, a random matrix can be generated with only one API call. 
 
 \subsection*{Matrix multiplication using shared memory}
+For the multiplication of $A \cdot A^{-1}$ we used the shared memory algorithm for matrix multiplication found in the CUDA 7.5 samples directory, namely the kernel in \texttt{0\_Simple/matrixMul\_nvrtc/matrixMul\_kernel.cu}.\\
+The algorithms works like visualized in figure (\ref{fig:multiply}):
+The blue part of $A \cdot B$ is computed by exactly one warp. Each entry of $A \cdot B$ is computed by one thread.\\ 
+In each step the green sub parts of $A$ and $B$ are loaded into the shared memory cache, so the threads of the warp can access them quickly. The threads multiply the columns of $A$ that are in the shared memory with the rows of $B$ that are in the shared memory and add the result to the corresponding entries in $A \cdot B$.
+\vspace{0.3cm}\\
+The original algorithms from the samples directory does not take matrices into account where the dimensions are not a multiple to the predefined shared memory block size. So we added the support for the multiplication of quadratic matrices of arbitrary dimension. This was done, by initializing the shared memory cache with 0, for those elements loaded into the cache that would exceed the dimension of the matrix.
+\begin{figure}
+\begin{tikzpicture}
+	\node at (-0.85,1.8) {$A$};
+	\node at (1.8,2.25) {$B$};
+	\node at (2.0,0.75) {$A \cdot B$};
+	\node at (0.75,0.75) [rectangle,fill=blue!40,minimum width=0.5cm, minimum height=0.5cm] {};
+	\node at (-1.35,0.75) [rectangle,fill=green!60,minimum width=0.5cm, minimum height=0.5cm] {};
+	\node at (0.75,2.85) [rectangle,fill=green!60,minimum width=0.5cm, minimum height=0.5cm] {};
+	\draw[step=0.5,black] grid (1.5,1.5);
+	\draw[step=0.5,black,xshift=-1.6cm] grid (1.5,1.5);
+	\draw[step=0.5,black,yshift=1.6cm] grid (1.5,1.5);
+	\node at (-2.6,2.25) {\textbf{Step 1}};
+	
+	\draw[dashed] (-3.0,-0.25) to (3,-0.25);
+	\draw[dashed] (-3.0,-4) to (3,-4);
+		\node at (-0.85,-2) {$A$};
+		\node at (1.8,-1.45) {$B$};
+		\node at (2.0,-2.95) {$A \cdot B$};
+		\node at (0.75,-2.95) [rectangle,fill=blue!40,minimum width=0.5cm, minimum height=0.5cm] {};
+		\node at (-0.85,-2.95) [rectangle,fill=green!60,minimum width=0.5cm, minimum height=0.5cm] {};
+		\node at (0.75,-1.35) [rectangle,fill=green!60,minimum width=0.5cm, minimum height=0.5cm] {};
+		\draw[step=0.5,black,yshift=-3.7cm] grid (1.5,1.5);
+		\draw[step=0.5,black,xshift=-1.6cm,yshift=-3.7cm] grid (1.5,1.5);
+		\draw[step=0.5,black,yshift=-2.1cm] grid (1.5,1.5);
+		\node at (-2.6,-1.3) {\textbf{Step 2}};
+		
+		\node at (-0.85,-5.8) {$A$};
+		\node at (1.8,-5.25) {$B$};
+		\node at (2.0,-6.75) {$A \cdot B$};
+		\node at (0.75,-6.75) [rectangle,fill=blue!40,minimum width=0.5cm, minimum height=0.5cm] {};
+		\node at (-0.35,-6.75) [rectangle,fill=green!60,minimum width=0.5cm, minimum height=0.5cm] {};
+		\node at (0.75,-5.65) [rectangle,fill=green!60,minimum width=0.5cm, minimum height=0.5cm] {};
+		\draw[step=0.5,black,yshift=-7.5cm] grid (1.5,1.5);
+		\draw[step=0.5,black,xshift=-1.6cm,yshift=-7.5cm] grid (1.5,1.5);
+		\draw[step=0.5,black,yshift=-5.9cm] grid (1.5,1.5);
+		\node at (-2.6,-5.2) {\textbf{Step 3}};
+		
+\end{tikzpicture}
+\centering
+\label{fig:multiply}
+\caption{Multiplication of $A$ and $B$ using shared memory}
+\end{figure}
 
 \subsection*{Checking if matrix is identity matrix}
 We need a procedure which checks if a given matrix $A$ of dimension $n$-by-$n$ is equal to the identity matrix $I_n$. Formally defined:
@@ -42,4 +90,11 @@ is\_id(A) := \begin{cases}
 \end{cases}
 \end{equation*}
 So $is\_id$ maps a matrix of $\mathbb{R}^{n \times n}$ to a single value $\{0,1 \}$. Therefore a implementation of $is\_id$ can be done efficiently using a \textbf{reduction}.  \\
-We adapted the code from the CUDA 7.5 samples directory, namely from \texttt{/samples/6\_Advanced/reduction/}. The sample code is based on the whitepaper from Harris \cite{Harris2010} and optimizes the reduction for a summation of an array.
+We adapted the code from the CUDA 7.5 samples directory, namely from \texttt{/samples/6\_Advanced/reduction/}. The sample code is based on the whitepaper from Harris \cite{Harris2010} and optimizes the reduction for a summation of an array. The modification we did was that instead of summing up all array entries we used a auxiliary function $f_{acc}$ which takes an entry and its index as input and is returns 1 if  the value and the index to not match with the definition of the identity matrix. Formally:
+\begin{equation}
+f_{acc}(A_{i,j}) := \begin{cases} 1 & \text{if }i = j \text{ and } |A_{i,j}-1| \geq \varepsilon\\
+1 & \text{if } i \neq j \text{ and } |A_{i,j}| \geq \varepsilon\\
+0 & \text{otherwise}	\end{cases}
+\end{equation}
+Note that due to the limited floating point representation, a rounding error variable $\varepsilon$ must be chosen that should be close to 0, e.g. $\varepsilon = 10^{-6}$. \\
+Our modified reduction computes $\sum_{i=0,j=0}^{n,n} f_{acc}(A_{i,j})$, so if the matrix $A$ matches the definition of the identity matrix the sum will be 0, if at least one entry of the matrix does not match the definition of the identity matrix, then the sum will be greater than 0.
