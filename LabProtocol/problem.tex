@@ -66,7 +66,42 @@ During this process we divided by $l_{11}$, so in the scenario where $l_{11}=0$,
 If there is no such row, then the matrix $A$ is singular, i.e. there exists to LU decomposition and no inverse. \\
 For keeping the numerical error done by this process low, it is recommended to find a row-permutation $\pi$, such that in each step the element $l_{11}$ is maximal with respect to the first column.
 \vspace{0.3cm}\\
-To compute the inverse 
+To get $A^{-1}$, every column of the inverse is computed separately, i.e. we need to find column vectors $x_i$ such that $L \cdot U \cdot x = b_i$, where $b_i$ is the i-th column of the identity matrix. Note that if we use a row-permutation $\pi$, then $\pi$ must also be applied to the vector $b_i$. The computation is again separated into two steps:\\
+\begin{enumerate}
+	\item Find vectors $y_i$ such that $L \cdot y_i = b_i$, this is called forward substitution
+	\item Find vectors $x_i$ such that $U \cdot x_i = y_i$, this is called backward substitution
+\end{enumerate}
+With our example:
+\begin{align*}
+	\begin{pmatrix} l_{11}  & 0 & 0\\
+	l_{21} & l_{22} & 0\\
+	l_{31} & l_{32} & l_{33}
+	\end{pmatrix} \cdot \begin{pmatrix} y_{i,1} \\ y_{i,2} \\ y_{i,3}	\end{pmatrix}
+	& = \begin{pmatrix}
+	b_{i,1} \\ b_{i,2} \\ b_{i,3}
+	\end{pmatrix} \\
+	\begin{pmatrix}
+	l_{11} y_{i,1}\\ l_{21} y_{i,1} + l_{22} y_{i,2}\\
+	l_{31} y_{i,1} + l_{32} y_{i,2} + l_{33} y_{i,3}
+	\end{pmatrix}	& = \begin{pmatrix}
+	b_{i,1} \\ b_{i,2} \\ b_{i,3}
+	\end{pmatrix} \\
+\end{align*}
+Where we will start to compute the top most element $y_{i,1}$ first and iteratively computing the next element down to the bottom most element, this is why this process is called forward substitution.
+\vspace{0.3cm}\\
+Having computed $y_i$ we will next compute $x_i$, e.g.
+\begin{align*}
+\begin{pmatrix} 1 & u_{12} & u_{13}\\
+0 & 1 & u_{23}\\
+0 & 0 & 1
+\end{pmatrix} \cdot \begin{pmatrix} x_{i,1} \\ x_{i,2} \\ x_{i,3}	\end{pmatrix}
+& = \begin{pmatrix} y_{i,1} \\ y_{i,2} \\ y_{i,3}	\end{pmatrix}\\
+\begin{pmatrix}
+x_{i,1} + x_{i,2} u_{12} + x_{i,3} u_{13}\\ x_{i,2} + x_{i,3} u_{23}\\
+x_{i,3}
+\end{pmatrix}	& = \begin{pmatrix} y_{i,1} \\ y_{i,2} \\ y_{i,3}	\end{pmatrix}\\
+\end{align*}
+As the name backwards substitution reveals, this time we will start computing the bottom most element $x_{i,3}$ first and iteratively use the results to compute the second bottom most element and so on.
 
 \subsection*{CUDA terminology}
 In the following the term \emph{host} refers to program code that is executed on the CPU. On the other hand is the term \emph{device} used to refer to program code that is executed on the GPU or computation card.\\
