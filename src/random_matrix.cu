@@ -1,14 +1,14 @@
-#include <cuda_runtime_api.h>
-#include <cuda.h>
+/* Matrix Inversion 
+ * Group F: M. Lechner, P. Knöbel, J. Lövhall
+ *
+ * Library to generate a Random Matrix
+*/
 
-#include <curand.h>
-#include <curand_kernel.h>
-
-#include "random_matrix.h"
+#include "includes.h"
 
 
 /* Kernel that scales up and truncates the random variables */
-__global__
+static __global__
 void ScaleUp(int n, float *mat, float max, int truncate)
 {
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
@@ -21,8 +21,13 @@ void ScaleUp(int n, float *mat, float max, int truncate)
 	}
 }
 
-
-float* generate_random_matrix(int n, float max, int truncate)
+/* Allocates an array of size n-by-n on the device
+ * and initializies it with random variables.
+ * The random variables are in the range of (0, max]
+ * If truncate != 0 the digits after the decimal point are truncated
+ * i.e. instead of 5.38463 the variable will be 5.0000 
+ */
+float* random_matrix_generate(int n, float max, int truncate)
 {
 	int size = n*n;
 

@@ -4,10 +4,10 @@
 #include <cuda_runtime_api.h>
 #include <cuda.h>
 
-#include "gpu_pivoting.h"
+#include "pivoting.h"
 
-static max_entry* reduced_block;
-static max_entry *host_block;
+static pivoting_max_entry* reduced_block;
+static pivoting_max_entry *host_block;
 static int reduced_block_size;
 static int maxThreadsPerBlock;
 static int maxGridSize;
@@ -50,13 +50,13 @@ struct SharedMemory<double>
     }
 };
 
-__device__ void check_max(float value, int index, max_entry &obj)
+__device__ void check_max(float value, int index, pivoting_max_entry &obj)
 {
   // printf(" Thx(%d) Casting to struct: %1.3f, %d\n",threadIdx.x ,value,index);
 obj.value=value;
 obj.index=index;
 }
-__device__  void combine_max(max_entry &a, max_entry &b)
+__device__  void combine_max(pivoting_max_entry &a, pivoting_max_entry &b)
 {
   //  printf("Thx(%d) Combining %d, %d (%1.3f, %1.3f)\n",threadIdx.x, a.index,b.index, a.value, b.value);
   if(fabs(b.value)>fabs(a.value))
@@ -67,9 +67,9 @@ __device__  void combine_max(max_entry &a, max_entry &b)
 }
 template <unsigned int blockSize>
 __global__ void
-reduce_max(float *g_idata, max_entry *g_odata, int size, int n)
+reduce_max(float *g_idata, pivoting_max_entry *g_odata, int size, int n)
 {
-    max_entry *sdata = SharedMemory<max_entry>();
+    pivoting_max_entry *sdata = SharedMemory<pivoting_max_entry>();
 
     // perform first level of reduction,
     // reading from global memory, writing to shared memory
@@ -77,7 +77,7 @@ reduce_max(float *g_idata, max_entry *g_odata, int size, int n)
     unsigned int i = blockIdx.x*blockSize*2 + threadIdx.x;
     unsigned int gridSize = blockSize*2*gridDim.x;
 
-    max_entry local_max;
+    pivoting_max_entry local_max;
     local_max.index=0;
     local_max.value=0.0f;
 
@@ -87,14 +87,14 @@ reduce_max(float *g_idata, max_entry *g_odata, int size, int n)
     while (i < size)
     {
         // printf("access item at %d (%1.3f)\n",i*n,g_idata[i*n]);
-		    max_entry acc;
+		    pivoting_max_entry acc;
         check_max(g_idata[i*n], i, acc);
         combine_max(local_max, acc);
 
         // ensure we don't read out of bounds -- this is optimized away for powerOf2 sized arrays
         if (i + blockSize < size)
 		{
-			max_entry acc2;
+			pivoting_max_entry acc2;
 
         // printf("access item at %d (%1.3f)\n",(i+blockSize)*n,g_idata[(i+blockSize)*n]);
 			check_max(g_idata[(i+blockSize)*n], (i+blockSize), acc2);
@@ -242,14 +242,14 @@ static void getNumBlocksAndThreads(int whichKernel, int n, int maxBlocks, int ma
     }
 }
 
-void reduce_max_host(int n, int threads, int blocks, float *d_idata, int size, max_entry *d_odata)
+void reduce_max_host(int n, int threads, int blocks, float *d_idata, int size, pivoting_max_entry *d_odata)
 {
     dim3 dimBlock(threads, 1, 1);
     dim3 dimGrid(blocks, 1, 1);
 
     // when there is only one warp per block, we need to allocate two warps
     // worth of shared memory so that we don't index shared memory out of bounds
-    int smemSize = (threads <= 32) ? 2 * threads * sizeof(max_entry) : threads * sizeof(max_entry);
+    int smemSize = (threads <= 32) ? 2 * threads * sizeof(pivoting_max_entry) : threads * sizeof(pivoting_max_entry);
 
 	switch (threads)
 	{
@@ -295,7 +295,7 @@ void reduce_max_host(int n, int threads, int blocks, float *d_idata, int size, m
 	}
 }
 
-max_entry find_pivot_semi_gpu(float *A, int n, int row)
+pivoting_max_entry pivoting_find_pivot_semi_gpu(float *A, int n, int row)
 {
   int blocks, threads;
 
@@ -303,7 +303,7 @@ max_entry find_pivot_semi_gpu(float *A, int n, int row)
   // DO not use threads > 32!!!!!! -> strange behaviour -> cudaMemcpy will fail
   getNumBlocksAndThreads(6, size, 1000, 32, blocks, threads);
 
-  //void reduce_max_host(int n, int threads, int blocks, float *d_idata, int row, max_entry *d_odata)
+  //void reduce_max_host(int n, int threads, int blocks, float *d_idata, int row, pivoting_max_entry *d_odata)
 
   // printf("Launch redcution kernel <<%d, %d>>\n",blocks,threads);
   reduce_max_host(n,threads,blocks,A+row*(1+n),size,reduced_block);
@@ -311,10 +311,10 @@ max_entry find_pivot_semi_gpu(float *A, int n, int row)
 
 
 	// Copy last block to host
-	cudaCheck(cudaMemcpy(host_block, reduced_block, blocks* sizeof(max_entry), cudaMemcpyDeviceToHost));
+	cudaCheck(cudaMemcpy(host_block, reduced_block, blocks* sizeof(pivoting_max_entry), cudaMemcpyDeviceToHost));
 
 	// Process last block
-	max_entry ret;
+	pivoting_max_entry ret;
   ret=host_block[0];
 	for(int i=1;i<blocks;i++)
 	{
@@ -327,14 +327,14 @@ max_entry find_pivot_semi_gpu(float *A, int n, int row)
   return ret;
 }
 
-void preload_device_properties(int n)
+void pivoting_preload_device_properties(int n)
 {
   reduced_block_size = n/32;
   if(n > reduced_block_size*32)
     reduced_block_size++;
 
-  cudaCheck(cudaMalloc((void**)&reduced_block, reduced_block_size* sizeof(max_entry)));
-  host_block = (max_entry *)malloc(reduced_block_size* sizeof(max_entry));
+  cudaCheck(cudaMalloc((void**)&reduced_block, reduced_block_size* sizeof(pivoting_max_entry)));
+  host_block = (pivoting_max_entry *)malloc(reduced_block_size* sizeof(pivoting_max_entry));
   //get device capability, to avoid block/grid size exceed the upper bound
   cudaDeviceProp prop;
   int device;
@@ -344,7 +344,7 @@ void preload_device_properties(int n)
   maxThreadsPerBlock = prop.maxThreadsPerBlock;
   maxGridSize = prop.maxGridSize[0];
 }
-void unload_device_properties(void)
+void pivoting_unload_device_properties(void)
 {
   cudaCheck(cudaFree(reduced_block));
   free(host_block);

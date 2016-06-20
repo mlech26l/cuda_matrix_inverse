@@ -1,18 +1,13 @@
-#include <stdio.h>
-#include <stdlib.h>
+/* Matrix Inversion 
+ * Group F: M. Lechner, P. Knöbel, J. Lövhall
+ *
+ * Print all Information about the Platform and set the active Card
+*/
 
-#include <cuda_runtime.h>
-#include <cuda.h>
-
-#include "device_query.h"
-
-
-
-#define cudaCheck(ans) do{if(ans != cudaSuccess){fprintf(stderr,"CUDA assert: %s %s %d\n", cudaGetErrorString(ans),  __FILE__, __LINE__); exit(EXIT_FAILURE);} }while(false)
-
+#include "includes.h"
 
 // Beginning of GPU Architecture definitions
-inline int _ConvertSMVer2Cores(int major, int minor)
+static inline int _ConvertSMVer2Cores(int major, int minor)
 {
     // Defines for GPU Architecture types (using the SM version to determine the # of cores per SM
     typedef struct
@@ -53,7 +48,7 @@ inline int _ConvertSMVer2Cores(int major, int minor)
 // end of GPU Architecture definitions
 
 
-void query_devices(int devID_selected)
+void device_query(int devID_selected)
 {
   int deviceCount = 0;
   int dev=0;

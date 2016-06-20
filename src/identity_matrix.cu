@@ -1,17 +1,11 @@
-#include "identity_matrix.h"
+/* Matrix Inversion 
+ * Group F: M. Lechner, P. Knöbel, J. Lövhall
+ *
+ * reduction to check if matrix is ID
+*/
 
-#include<math.h>
-#include<stdio.h>
+#include "includes.h"
 
-#define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
-inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
-{
-   if (code != cudaSuccess)
-   {
-      fprintf(stderr,"GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
-      if (abort) exit(code);
-   }
-}
 
 /* Sets the diagonal to 1 */
 __global__
@@ -374,7 +368,7 @@ void reduce(int n, int threads, int blocks, float *d_idata, int *d_odata)
 	}
 }
 
-int is_identity_matrix(float* d_mat, int n)
+int identity_matrix(float* d_mat, int n)
 {
 	// Allocate memory for partial results
 	int *d_sum;

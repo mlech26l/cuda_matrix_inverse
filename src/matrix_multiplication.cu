@@ -60,7 +60,6 @@ matrixMulCUDA(float *C, float *A, float *B, int n)
 	// Csub is used to store the element of the block sub-matrix
 	// that is computed by the thread
 	float Csub = 0;
-	int terms =0;
 
 	int py = BLOCK_SIZE * by + ty;
 	int px = BLOCK_SIZE * bx + tx;
@@ -133,7 +132,7 @@ matrixMulCUDA(float *C, float *A, float *B, int n)
 }
 
 
-void matrix_multiply(float* C, float* A, float* B, int n)
+void matrix_multiplication(float* C, float* A, float* B, int n)
 {
 	// Define grid
 	dim3 dimBlock(MULTIPLY_BLOCK_SIZE, MULTIPLY_BLOCK_SIZE);
