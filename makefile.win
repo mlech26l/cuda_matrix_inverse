@@ -11,7 +11,6 @@ obj:
 bin:
 	mkdir bin
 
-
 bin\matrix.exe: obj\wingetopt.obj obj\device_query.obj obj\pivoting.obj obj\main.obj obj\tools.obj obj\random_matrix.obj obj\gauss.obj obj\lu_dec.obj obj\matrix_multiplication.obj obj\identity_matrix.obj obj\test.obj
 	$(CC) -o $@ $(lib) $(ccopt) $**
 

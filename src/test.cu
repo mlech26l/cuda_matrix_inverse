@@ -118,9 +118,8 @@ static void do_partial_check(float *d_inv, float* h_inv, float *h_mat,float *d_m
 void test_gauss(int n){
 	printf("running Jakobs tests.\n");
 
+  float time = 0;
   cudaEvent_t start, stop;
-  cudaEventCreate(&start);
-  cudaEventCreate(&stop);
 
 	float *matrix;
 	float * matrix_org;
@@ -137,6 +136,7 @@ void test_gauss(int n){
 		float * d_mat;
 		d_mat = random_matrix_generate(n,100,1);
 		gpuErrchk(cudaMemcpy(matrix, d_mat, n*n * sizeof(float), cudaMemcpyDeviceToHost))
+    cudaCheck(cudaFree(d_mat));
 	} 
 
 	int i;
@@ -156,9 +156,26 @@ void test_gauss(int n){
 		tools_WAprint(n,matrix);
 	}
 
+  
+  cudaEventCreate(&start);
+  cudaEventCreate(&stop);
   cudaEventRecord(start);
   cudaEventSynchronize(start);
 
+  gauss_inverse_gpu(matrix, n, inverse);
+
+  cudaEventRecord(stop);
+  cudaEventSynchronize(stop);
+  cudaEventElapsedTime(&time, start, stop);
+  printf("CUDA inverse took ms: %f\n", time);
+  cudaEventDestroy(start);
+  cudaEventDestroy(stop);
+  
+  
+  cudaEventCreate(&start);
+  cudaEventCreate(&stop);
+  cudaEventRecord(start);
+  cudaEventSynchronize(start);
 
   //running cpu test first because it has singularity check.
   //inversion destroys the matrix
@@ -166,10 +183,12 @@ void test_gauss(int n){
 
   cudaEventRecord(stop);
   cudaEventSynchronize(stop);
-  float time = 0;
   cudaEventElapsedTime(&time, start, stop);
   printf("CPU inverse took ms: %f\n", time);
+  cudaEventDestroy(start);
+  cudaEventDestroy(stop);
 
+  
 	if(!succ)
 	{
 		printf("Matrix singular!");
@@ -181,25 +200,8 @@ void test_gauss(int n){
 		matrix[i] = matrix_org[i];
 	}
 
-	{
-    cudaEventDestroy(start);
-    cudaEventDestroy(stop);
 
-    cudaEventCreate(&start);
-    cudaEventCreate(&stop);
-    cudaEventRecord(start);
-    cudaEventSynchronize(start);
-		gauss_inverse_gpu(matrix, n, inverse);
 
-    cudaEventRecord(stop);
-    cudaEventSynchronize(stop);
-    float time = 0;
-    cudaEventElapsedTime(&time, start, stop);
-    cudaEventDestroy(start);
-    cudaEventDestroy(stop);
-
-		printf("CUDA inverse took ms: %f\n", time);
-	}
 
 	if(!tools_is_equal(inverse,inverse_matrix_cpu,n*n)){
 		printf("matrixes not equal. printing.\n\n");

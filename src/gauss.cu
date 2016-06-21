@@ -102,14 +102,16 @@ void zero_out_column_gpu(int column, int direction, float * in, float * out, int
 	int idx = blockIdx.x*blockDim.x  + threadIdx.x;
 	if(idx < size){
 		int j;
+    float tout=out[idx + column*size];
+    float tin=in[idx + column*size];
 		for(j = column + direction; j < size && j >= 0; j+= direction){
 			float scale = in[j*size + column];
 
-			__syncthreads();
-			out[idx + j*size] = out[idx+j*size] - (out[idx + column*size] * scale);
-			__syncthreads();
-			in[idx + j*size] = in[idx+j*size] - (in[idx + column*size] * scale);
-			__syncthreads();
+			//__syncthreads();
+			out[idx + j*size] = out[idx+j*size] - (tout * scale);
+			//__syncthreads();
+			in[idx + j*size] = in[idx+j*size] - (tin* scale);
+			//__syncthreads();
 		}
 	}
 }
@@ -120,13 +122,13 @@ void divide_2rows_gpu(int denominator_idx, float * denom_src_vec, float * vector
 	int idx = blockIdx.x*blockDim.x  + threadIdx.x;
 	float denominator = denom_src_vec[denominator_idx];
 
-	__syncthreads();
+//	__syncthreads();
 
 	if(idx < size){
 		vector[idx] = vector[idx]/denominator;
-		__syncthreads();
+//		__syncthreads();
 		vector2[idx] = vector2[idx]/denominator;
-		__syncthreads();
+//		__syncthreads();
 	}
 }
 
@@ -147,10 +149,10 @@ int gauss_inverse_gpu(float * in, int size, float * out){
 		//todo, there was a check for the possibility to invert here before (row swap), should be brought back adventually
 
 		//scale the row so that [i][i] == 1
-		divide_2rows_gpu<<<size/32 + 1,32>>>(i*size + i,d_in , d_in + i*size, d_out + i*size, size);
+		divide_2rows_gpu<<<size/128 + 1,128>>>(i*size + i,d_in , d_in + i*size, d_out + i*size, size);
 		cudaDeviceSynchronize();
 		//zero out the column below
-		zero_out_column_gpu<<<size/32 + 1,32>>>(i, 1, d_in, d_out, size);
+		zero_out_column_gpu<<<size/128 + 1,128>>>(i, 1, d_in, d_out, size);
 		cudaDeviceSynchronize();
 	}
 
@@ -164,7 +166,7 @@ int gauss_inverse_gpu(float * in, int size, float * out){
 			print_matrix(out, size);
 			printf("\n\n");
 		}*/
-		zero_out_column_gpu<<<size/32 + 1,32>>>(column, -1, d_in, d_out, size);
+		zero_out_column_gpu<<<size/128 + 1,128>>>(column, -1, d_in, d_out, size);
 		cudaDeviceSynchronize();
 		/*if(column == 11){
 			gpuErrchk(cudaMemcpy(out, d_out, size*size*sizeof(float), cudaMemcpyDeviceToHost))
@@ -177,6 +179,9 @@ int gauss_inverse_gpu(float * in, int size, float * out){
 
 	//get the inverted matrix back to host memory
 	gpuErrchk(cudaMemcpy(out, d_out, size*size*sizeof(float), cudaMemcpyDeviceToHost))
+
+  cudaCheck(cudaFree(d_in));
+  cudaCheck(cudaFree(d_out));
 
 	return 1;
 }
