@@ -98,3 +98,36 @@ f_{acc}(A_{i,j}) := \begin{cases} 1 & \text{if }i = j \text{ and } |A_{i,j}-1| \
 \end{equation}
 Note that due to the limited floating point representation, a rounding error variable $\varepsilon$ must be chosen that should be close to 0, e.g. $\varepsilon = 10^{-6}$. \\
 Our modified reduction computes $\sum_{i=0,j=0}^{n,n} f_{acc}(A_{i,j})$, so if the matrix $A$ matches the definition of the identity matrix the sum will be 0, if at least one entry of the matrix does not match the definition of the identity matrix, then the sum will be greater than 0.
+
+\subsection*{LU decomposition}
+To store the L and the U matrix, only one array of size $n^2$ is needed, because of the fixed 0s and 1s. For example the matrices
+\begin{equation*}
+ L = \begin{pmatrix} l_{11}  & 0 & 0\\ 
+l_{21} & l_{22} & 0\\
+l_{31} & l_{32} & l_{33}
+\end{pmatrix}, U = \begin{pmatrix} 1 & u_{12} & u_{13}\\
+0 & 1 & u_{23}\\
+0 & 0 & 1\\
+\end{pmatrix} 
+\end{equation*}
+Can be stored as
+\begin{equation*}
+LU = \begin{pmatrix} l_{11}  &  u_{12} & u_{13}\\
+l_{21} & l_{22} & u_{23}\\
+l_{31} & l_{32} & l_{33}
+\end{pmatrix}
+\end{equation*}
+and thereby reducing the memory requirements by half.
+\vspace{0.3cm}\\
+The computation of the LU matrices and the row-permutation is separated into the following steps:
+\begin{enumerate}
+	\item Find Pivot, i.e. find row with the maximal absolute value in first column.\\
+	This can be done efficiently on the GPU using a \textbf{reduction}. Like with the check for identity matrix we used the sample reduction in \texttt{/samples/6\_Advanced/reduction/} by Harris \cite{Harris2010}.
+	\item Divide the pivot-row by pivot. Because the single computations do not depend on each other one grid equal to the side of the row can be launched. Each thread of the grid divides exactly one element of the row by the pivot. 
+	\item Swap rows. This is application the row-permutation. Like before, each thread will swap exactly one item of the pivot row with the item in the first row.
+	\item Update sub-matrix. As mentioned in section (\ref{sec:problem}) each element in the (n-1)-by-(n-1) sub-matrix needs to be subtracted by the product of the corresponding elements in the first row and first column. Every entry of this sub-matrix is updated by one thread. So the grid launched to do this task if of size (n-1)-by-(n-1)
+	\item Process sub-matrix (recursive step)
+\end{enumerate}
+The last step would involve a recursive call to the procedure to itself. For performance reasons, the recursive algorithm was transformed into an iterative algorithm.
+\subsection*{Matrix inversion of LU matrix}
+As stated in section (\ref{sec:problem}), each column of the inverse matrix is computed separately by solving a linear equation. Because each linear equation is independent from the others, they can be solved in parallel. So a grid of size $n$ is launched, where each thread solves exactly one linear equation.  

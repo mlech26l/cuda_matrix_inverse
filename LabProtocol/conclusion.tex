@@ -3,14 +3,12 @@
 \section{CONCLUSION}
 \label{sec:conclusion}
 
-GPGPU computing can be used to speed up matrix inversion for medium to large matrices, for small matrices the overhead of passing data back and forth between the host and the GPU is bigger than just running the inversion on the CPU. The observed speed up increases with data size but would likely stop when limits of the GPU is reached. But the there where problems implementing the code in CUDA with errors which where very difficult to debug, even with the cuda tools such as cuda-gdb and cuda-memcheck.
+GPGPU computing can be used to speed up matrix inversion for medium to large matrices, for small matrices the overhead of passing data back and forth between the host and the GPU is bigger than just running the inversion on the CPU. The observed speed up increases with data size but saturates at the time all CUDA cores are utilized. 
 
 \subsection*{Accuracy}
 Due to the limited precision of the used single precision floating point type, the correctness check $A \cdot A^{-1}$ does not always succeed for large dimension $n > 10.000$ and a constant $\varepsilon$. This effect comes out differently on the CPU vs the GPU. The main reason for this behavior is the different instruction sets for allowing the excessive use of \emph{fused-multiply-accumulate} (FMA) instructions on CUDA. As Hokenek et. al \cite{Hokenek90} claims the fusing of arithmetic instructions will increase the accuracy of the computation. In the case of a fused divide and accumulate unit by Amaricai et al. \cite{Amaricai2010} an increase of accuracy up to the factor of 2 can be archived theoretically.
 
-\section{problems}
-The Gaussian elimination algorithm does not get the same result as the CPU implementation on some matrices, the smallest found is the generated matrix for a 29x29 matrix, the result is close though, ~0.0001 in difference. This behaviour is not observed if the kernel is run in cuda-memcheck. The cause of this is as of now unknown. 
+\section{Encountered problems}
+The final version of the Gaussian elimination algorithm does not get the same result as the CPU implementation for some matrices. The smallest such case found is the generated 29-by-by-29 matrix, the result is close though, ~0.0001 in difference. This behavior is not observed if the kernel is run in \texttt{cuda-memcheck}. The cause of this is as of now unknown, but we assume that the reason is within memory-subsystem, because of the different behavior when started with \texttt{cuda-memcheck}.
 
-Initially there where a lot of problems with pointers being dereferenced on the wrong platform, mostly sending host pointers to GPU, defining a cuda debug preprocessor script helped a lot with this, so that all memory transferees are warped in this script. 
-
-There where also a lot of out of bounds memory accesses which helped to find and resolve cuda-memchecker.
+During the implementation process a lot of memory-based bugs were encountered, mostly out-of-bound accesses. \texttt{cuda-memcheck} helped a lot in finding the source of these bugs. Additionally the support of \texttt{printf} inside a kernel was speeding up the process of tracking faults.
