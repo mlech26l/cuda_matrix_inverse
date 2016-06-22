@@ -9,6 +9,38 @@ In figure (\ref{fig:speedup}) the speedups of the matrix inversion algorithm by 
 	\caption{Speedup of matrix inversion using LU decomposition compared to area-equivalent CPUs}
 \end{figure*}
 
+The detailed results are shown in table (\ref{tab:results1}) and table (\ref{tab:results2}).
+The algorithm based on the Gaussian elimination runs about 60\% faster on CUDA compared to the LU decomposition. The difference between the sequential and the CUDA version max out at a factor of 7 on the Tesla K10 using the Gaussian elimination. The speedup factor of the LU decomposition max out on the same card at a value of around 14
+
+\begin{table*}
+	\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|}\hline
+		\rowcolor{black!20} \textbf{Dimension} & \multicolumn{3}{c}{ \textbf{Tesla K10}} & \multicolumn{3}{c}{ \textbf{GT 730}} & \multicolumn{3}{c}{ \textbf{GT 525M}} \\\hline
+			\rowcolor{black!20} & CPU & GPU & Speedup & CPU & GPU & Speedup & CPU & GPU & Speedup \\\hline\hline
+		1,000 & 1.6 & 0,7 & 2.1 & 5.1 & 2.3 & 2.2 & 7.8 & 2.1 & 3.7 \\\hline
+		2,000 & 12.2 & 3,5 & 3.4 & 63 & 17.8 & 3.5 & 88.1 & 15.5 & 5.6 \\\hline
+		4,000 & 191.9 & 19,3 & 9.9 & 542 & 138 & 3.9 & 841 & 118 & 7.1 \\\hline
+		8,000 & 2462 & 157 & 15.6 & 5368 & 1118 & 4.8 & & & \\\hline
+		16,000 & 16250 & 1263 & 12.8 &  & & & & & \\\hline
+	\end{tabular}
+	\centering
+	\label{tab:results1}
+	\caption{Detailed execution times of the inversion by LU decomposition algorithm in seconds}
+\end{table*}
+\begin{table*}
+	\begin{tabular}{|c|c|c|c|c|c|c|}\hline
+		\rowcolor{black!20} \textbf{Dimension} & \multicolumn{3}{c}{ \textbf{Tesla K10}} & \multicolumn{3}{c}{ \textbf{GT 730}}  \\\hline
+		\rowcolor{black!20} & CPU & GPU & Speedup & CPU & GPU & Speedup \\\hline\hline
+		1,000 & 1.3 & 1.1 & 1.1 & 0.8 & 1.3 & 0.6 \\\hline
+		2,000 & 10.5 & 4.3 & 2.4 & 8.9 & 6.1 & 1.4 \\\hline
+		4,000 & 94.3 & 17.2 & 5.4 & 73.5 & 41.9 & 1.7  \\\hline
+		8,000 & 660 & 96 & 6.8 & 591 & 337 &  1.7 \\\hline
+		16,000 & 5427 & 788  & 6.8  & 4436 & 2694 & 1.6 \\\hline
+	\end{tabular}
+	\centering
+	\label{tab:results2}
+	\caption{Detailed execution times of the inversion by Gaussian elimination algorithm in seconds}
+\end{table*}
+
 \subsection*{Profiling}
 We got another interesting result by running Nvidia's Visual Profiler to compare the computational impact of the single steps of the algorithm.
 \vspace{0.2cm}\\
