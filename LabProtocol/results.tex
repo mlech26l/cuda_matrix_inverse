@@ -1,3 +1,32 @@
 % !TEX root =  root.tex
 
 \section{RESULTS}\label{sec:results}
+In figure (\ref{fig:speedup}) the speedups of the matrix inversion algorithm by LU decomposition for various of GPU models are displayed. The speedup is archived against a sequential version of the algorithm running on area-equivalent CPUs, i.e. the Tesla K10 is compared to a Intel Xeon server CPU, the GT 730 is compared to a desktop CPU and the GT 525M to a Intel i5 mobile CPU. 
+\begin{figure*}
+	\includegraphics[width=18cm]{figs/speedup.png}
+	\centering
+	\label{fig:speedup}
+	\caption{Speedup of matrix inversion using LU decomposition compared to area-equivalent CPUs}
+\end{figure*}
+
+\subsection*{Profiling}
+We got another interesting result by running Nvidia's Visual Profiler to compare the computational impact of the single steps of the algorithm.
+\vspace{0.2cm}\\
+Main computational impact on the sequential algorithm is the inversion step. The inversion takes more than 10 times more time than the LU decomposition.\\
+The CUDA version of the algorithm has ratio of about 1:2, i.e. the inversion takes about twice the time as the decomposition. \\ 
+The LU decomposition has only a minor speedup on CUDA compared to the CPU. For example the GT 525M is about 1.3 times faster in LU decomposition than the CPU, while the inversion is about 10 times faster (for n=2000).\\
+As already mentioned in section (\ref{sec:methods}), the LU decomposition consists of a lot of small grid launched, while the inversion is done by only launching a single grid. 
+So one reason for the ''poor'' LU decomposition speedup might be the grid launch overhead. Also an heavy  impact on the speed of the CUDA algorithm is most likely the call of \texttt{cudaMemcpy} in each pivot-finding reduction. In the current version of the algorithm the row-permutation vector is created element by element on the host memory and copied to the GPU memory after the LU decomposition has finished. Even though each call of \texttt{cudaMemcpy} copies only a small amount of data, the CUDA-API calls (\texttt{cudaMemcpy} and grid launch) require a communication of the PCI bus, which has a relatively high latency.
+\vspace{0.2cm}\\
+So one possible improvement of the LU decomposition algorithm might be to combine some girds and more important to create and keep the row-permutation vector on the GPU memory.
+\vspace{0.3cm}\\
+The computational impact of each single kernel is shown in figure (\ref{fig:nfprof}). The matrix inversion kernel needs about 64\% of kernel time, the updating of the sub-matrix in the LU decomposition about 35\%. All the other kernels, like row-swap, pivot finding and row-dividing only need less than 1\% of kernel time. 
+\begin{figure*}
+	\includegraphics[width=18cm]{figs/nvprof.png}
+	\centering
+	\label{fig:nfprof}
+	\caption{Screenshot of Nvidia's Visual Profiler running the LU decomposition based matrix inversion algorithm}
+\end{figure*}
+
+\subsection*{Accuracy}
+Due to the limited precision of the used single precision floating point type, the correctness check $A \cdot A^{-1}$ does not always succeed for large dimension $n > 10.000$ and a constant $\varepsilon$. This effect comes out differently on the CPU vs the GPU. The main reason for this behavior is the different instruction sets for allowing the excessive use of \emph{fused-multiply-accumulate} (FMA) instructions on CUDA. As Hokenek et. al \cite{Hokenek90} claims the fusing of arithmetic instructions will increase the accuracy of the computation. In the case of a fused divide and accumulate unit by Amaricai et al. \cite{Amaricai2010} an increase of accuracy up to the factor of 2 can be archived theoretically.

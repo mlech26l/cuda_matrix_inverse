@@ -5,9 +5,6 @@
 
 GPGPU computing can be used to speed up matrix inversion for medium to large matrices, for small matrices the overhead of passing data back and forth between the host and the GPU is bigger than just running the inversion on the CPU. The observed speed up increases with data size but saturates at the time all CUDA cores are utilized. 
 
-\subsection*{Accuracy}
-Due to the limited precision of the used single precision floating point type, the correctness check $A \cdot A^{-1}$ does not always succeed for large dimension $n > 10.000$ and a constant $\varepsilon$. This effect comes out differently on the CPU vs the GPU. The main reason for this behavior is the different instruction sets for allowing the excessive use of \emph{fused-multiply-accumulate} (FMA) instructions on CUDA. As Hokenek et. al \cite{Hokenek90} claims the fusing of arithmetic instructions will increase the accuracy of the computation. In the case of a fused divide and accumulate unit by Amaricai et al. \cite{Amaricai2010} an increase of accuracy up to the factor of 2 can be archived theoretically.
-
 \section{Encountered problems}
 The final version of the Gaussian elimination algorithm does not get the same result as the CPU implementation for some matrices. The smallest such case found is the generated 29-by-by-29 matrix, the result is close though, ~0.0001 in difference. This behavior is not observed if the kernel is run in \texttt{cuda-memcheck}. The cause of this is as of now unknown, but we assume that the reason is within memory-subsystem, because of the different behavior when started with \texttt{cuda-memcheck}.
 
