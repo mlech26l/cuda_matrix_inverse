@@ -31,7 +31,15 @@ with
 	\textbf{Adjugate matrix} Let $M_{i,j}$ be the matrix $A$ where the $i$-th row and the $j$-th column are removed. Then:
 	\[ \text{\textnormal{adj}}_{i,j}(A) = (-1)^{i+j} \text{\textnormal{det}}(M_{j,i}) \]
 \end{definition}
+
 This way of inverting a matrix works well for small $n$ (especially if $n \leq 3$), because the determinant is easy to compute in these cases.\\
+
+For bigger matrices we have to deal with calculating $n^2$ determinants for $n-1$ matrices. There are a lot of good algorithms \cite{Dodgson1866} and \cite{ABDELMALEK2007} to compute determinants on a Parallel architecture. To run the algorithm for one determinant we need on average $n$ kernel launches. Therefore we get $n^3$ kernel launches. We could also compute all determinants in parallel, but it will need $n^4$ of memory. So for instances with size bigger then 1000 this method is not handleable. \\
+
+The matrices $M_{j,i}$ are very similar to each other. This can be used to save a lot of memory and computation time. But we did not find any algorithm which utilize this fact.\\
+
+Over all the inversion method by adjugate matrix is not suitable for bigger matrices.  Therefore we did not implement it.
+
 \subsection*{LU decomposition}
 The LU decomposition, namely with Crout's method, computes two matrices $L$ and $U$, such that $A=L \cdot U$. Where $L$ is a lower triangular matrix and $U$ is a upper triangular with 1's in the diagonal. An example with dimension 3 is:
 \begin{align*}
