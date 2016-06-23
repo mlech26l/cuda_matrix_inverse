@@ -276,3 +276,7 @@ _Pvt_Extensions
 # algorithms
 *.alg
 *.loa
+
+#ignor pdf from protocol
+*.pdf
+
