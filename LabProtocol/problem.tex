@@ -2,24 +2,23 @@
 
 
 \section{PROBLEM STATEMENT}\label{sec:problem}
-First we will repeat some mathematical definitions for the sake of completeness.
+First we will state the mathematical definitions that are needed to understand the rest of the paper.
 \begin{definition}
 	\textbf{Inverse Matrix}
 	Let $A \in \mathbb{R}^n \times \mathbb{R}^n$ and $I_n$ be the identity matrix of dimension $n$, then the matrix $A^{-1} \in \mathbb{R}^n \times \mathbb{R}^n$ is called \textbf{inverse matrix} of $A$ if and only if
 	\begin{equation}\label{eq:inverse}
-	A \cdot A^{-1} = I_n
+	AA^{-1} = I_n
 	\end{equation}
 \end{definition}
-A quadratic matrix $A$ is called \emph{regular} if there exists a inverse matrix of $A$. If there exists no inverse of $A$ then $A$ is called \emph{singular}.\\
-Inverse matrices can be though to find, but have various of different uses especially in control theory to describe linear systems.  
+A quadratic matrix $A$ is called \emph{regular} if there exists a inverse matrix of $A$. If no inverse of $A$ exists then $A$ is called \emph{singular}. Inverse matrices can be tough to find, but have various of different uses especially in control theory to describe linear systems.  
 \vspace{0.2cm}\\
 There are a lot of ways to compute the inverse of a matrix, we will introduce some of the most common ones.\\
 \subsection*{Gaussian-Elimination}
-Calculcating the inverse by Gaussian-elemination is done by starting with two matrixes, the matrix A that should be inverted and matrix B which is initialized to the identity matrix. By performing row reductions on matrix A to make it into the identity matrix and copying all operations to matrix B gives that B is the inverse of A when A is the identity matrix.
+Calculcating the inverse by Gaussian-elemination is done by starting with two matrixes, the matrix A that should be inverted and matrix B which is initialized to the identity matrix. By performing row reductions on matrix A to make it into the identity matrix and copying all operations to matrix B transforms B to the inverse of A.
 
 The operations of transforming A into the identity matrix is divided into steps, forward elimination and backward elimination.
-While doing forward elimination, row operations is performed on the matrix so that the diagonal is 1 and that every element below is zero.
-Backward elimination is performing row operations so that all elements above the diagonal is zero.
+While doing forward elimination, row operations are performed on the matrix so that the diagonal is 1 and that every element below is zero.
+Backward elimination is performing row operations so that all elements above the diagonal becomes zero.
 
 \subsection*{Inversion by adjugate matrix}
 The inverse $A^{-1}$ of $A$ can be computed by:
@@ -33,7 +32,7 @@ with
 \end{definition}
 This way of inverting a matrix works well for small $n$ (especially if $n \leq 3$), because the determinant is easy to compute in these cases.\\
 \subsection*{LU decomposition}
-The LU decomposition, namely with Crout's method, computes two matrices $L$ and $U$, such that $A=L \cdot U$. Where $L$ is a lower triangular matrix and $U$ is a upper triangular with 1's in the diagonal. An example with dimension 3 is:
+The LU decomposition, namely with Crout's method, computes two matrices $L$ and $U$, such that $A=LU$. Where $L$ is a lower triangular matrix and $U$ is a upper triangular with 1's in the diagonal. An example with dimension 3 is:
 \begin{align*}
 	 \begin{pmatrix}
 	 a_{11} & a_{12} & a_{13}\\
@@ -42,7 +41,7 @@ The LU decomposition, namely with Crout's method, computes two matrices $L$ and 
 	 \end{pmatrix} & = \begin{pmatrix} l_{11}  & 0 & 0\\
 	 l_{21} & l_{22} & 0\\
 	 l_{31} & l_{32} & l_{33}
-	 \end{pmatrix} \cdot \begin{pmatrix} 1 & u_{12} & u_{13}\\
+	 \end{pmatrix} \begin{pmatrix} 1 & u_{12} & u_{13}\\
 	 0 & 1 & u_{23}\\
 	 0 & 0 & 1\\
 	 \end{pmatrix}\\
@@ -57,26 +56,26 @@ Next we will set the remaining first column of $L$ to the first column of $A$, i
 \begin{equation*}
  \begin{pmatrix}
 l_{22} & l_{22} u_{23}\\
-l_{32} & l{32} u_{23} + l_{32}\\
+l_{32} & l_{32} u_{23} + l_{32}\\
 \end{pmatrix}
 \end{equation*}
 Thus we can apply the same algorithm recursively on this sub-matrix.
 \vspace{0.3cm}\\
-During this process we divided by $l_{11}$, so in the scenario where $l_{11}=0$, it is necessary to swap the first row with a different row where the first element is not zero. Formally defined this corresponds to a row-permutation of the matrix $A$. So in fact we are looking for the two matrices $L$, $U$ and a row-permutation $\pi$, such that $\pi(A) = L \cdot U$\\  
-If there is no such row, then the matrix $A$ is singular, i.e. there exists to LU decomposition and no inverse. \\
+During this process we divided by $l_{11}$, so in the scenario where $l_{11}=0$, it is necessary to swap the first row with a different row where the first element is not zero. Formally defined this corresponds to a row-permutation of the matrix $A$. So in fact we are looking for the two matrices $L$, $U$ and a row-permutation $\pi$, such that $\pi(A) = LU$\\  
+If there is no such row, then the matrix $A$ is singular, i.e. there exists no LU decomposition and no inverse. \\
 For keeping the numerical error done by this process low, it is recommended to find a row-permutation $\pi$, such that in each step the element $l_{11}$ is maximal with respect to the first column.
 \vspace{0.3cm}\\
-To get $A^{-1}$, every column of the inverse is computed separately, i.e. we need to find column vectors $x_i$ such that $L \cdot U \cdot x = b_i$, where $b_i$ is the i-th column of the identity matrix. Note that if we use a row-permutation $\pi$, then $\pi$ must also be applied to the vector $b_i$. The computation is again separated into two steps:\\
+To get $A^{-1}$, every column of the inverse is computed separately, i.e. we need to find column vectors $x_i$ such that $LUx_i = b_i$, where $b_i$ is the i-th column of the identity matrix. Note that if we use a row-permutation $\pi$, then $\pi$ must also be applied to the vector $b_i$. The computation is again separated into two steps:\\
 \begin{enumerate}
-	\item Find vectors $y_i$ such that $L \cdot y_i = b_i$, this is called forward substitution
-	\item Find vectors $x_i$ such that $U \cdot x_i = y_i$, this is called backward substitution
+	\item Find vectors $y_i$ such that $Ly_i = b_i$, this is called forward substitution
+	\item Find vectors $x_i$ such that $Ux_i = y_i$, this is called backward substitution
 \end{enumerate}
 With our example:
 \begin{align*}
 	\begin{pmatrix} l_{11}  & 0 & 0\\
 	l_{21} & l_{22} & 0\\
 	l_{31} & l_{32} & l_{33}
-	\end{pmatrix} \cdot \begin{pmatrix} y_{i,1} \\ y_{i,2} \\ y_{i,3}	\end{pmatrix}
+	\end{pmatrix} \begin{pmatrix} y_{i,1} \\ y_{i,2} \\ y_{i,3}	\end{pmatrix}
 	& = \begin{pmatrix}
 	b_{i,1} \\ b_{i,2} \\ b_{i,3}
 	\end{pmatrix} \\
@@ -94,7 +93,7 @@ Having computed $y_i$ we will next compute $x_i$, e.g.
 \begin{pmatrix} 1 & u_{12} & u_{13}\\
 0 & 1 & u_{23}\\
 0 & 0 & 1
-\end{pmatrix} \cdot \begin{pmatrix} x_{i,1} \\ x_{i,2} \\ x_{i,3}	\end{pmatrix}
+\end{pmatrix} \begin{pmatrix} x_{i,1} \\ x_{i,2} \\ x_{i,3}	\end{pmatrix}
 & = \begin{pmatrix} y_{i,1} \\ y_{i,2} \\ y_{i,3}	\end{pmatrix}\\
 \begin{pmatrix}
 x_{i,1} + x_{i,2} u_{12} + x_{i,3} u_{13}\\ x_{i,2} + x_{i,3} u_{23}\\
@@ -104,6 +103,6 @@ x_{i,3}
 As the name backwards substitution reveals, this time we will start computing the bottom most element $x_{i,3}$ first and iteratively use the results to compute the second bottom most element and so on.
 
 \subsection*{CUDA terminology}
-In the following the term \emph{host} refers to program code that is executed on the CPU. On the other hand is the term \emph{device} used to refer to program code that is executed on the GPU or computation card.\\
+In the following the term \emph{host} refers to program code that is executed on the CPU. On the other hand the term \emph{device} is used to refer to program code that is executed on the GPU or computation card.\\
 A \emph{kernel} is a function that can be executed on the device.
 

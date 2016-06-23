@@ -9,8 +9,7 @@ In figure (\ref{fig:speedup}) the speedups of the matrix inversion algorithm by 
 	\caption{Speedup of matrix inversion using LU decomposition compared to area-equivalent CPUs}
 \end{figure*}
 
-The detailed results are shown in table (\ref{tab:results1}) and table (\ref{tab:results2}).
-The algorithm based on the Gaussian elimination runs about 60\% faster on CUDA compared to the LU decomposition. The difference between the sequential and the CUDA version max out at a factor of 7 on the Tesla K10 using the Gaussian elimination. The speedup factor of the LU decomposition max out on the same card at a value of around 14
+The algorithm based on the Gaussian elimination runs about 60\% faster on CUDA compared to the LU decomposition on big matrices. The difference between the sequential and the CUDA version max out at a speedup of 7 on the Tesla K10 using the Gaussian elimination. The speedup factor of the LU decomposition max out on the same card at a value of around 14. The detailed results are shown in table \ref{tab:results1} and table \ref{tab:results2}.
 
 \begin{table*}
 	\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|}\hline
