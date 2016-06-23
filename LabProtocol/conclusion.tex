@@ -3,9 +3,9 @@
 \section{CONCLUSION}
 \label{sec:conclusion}
 
-GPGPU computing can be used to speed up matrix inversion for medium to large matrices, for small matrices the overhead of passing data back and forth between the host and the GPU is bigger than just running the inversion on the CPU. The observed speed up increases with data size but saturates at the time all CUDA cores are utilized. 
+(General purpose graphical processing unit) GPGPU computing can be used to speed up matrix inversion for medium to large matrices, for small matrices the overhead of passing data back and forth between the host and the GPU is bigger than just running the inversion on the CPU. The observed speedup increases with data size but saturates at the time all CUDA cores are utilized. 
 
 \section{Encountered problems}
-The final version of the Gaussian elimination algorithm does not get the same result as the CPU implementation for some matrices. The smallest such case found is the generated 29-by-by-29 matrix, the result is close though, ~0.0001 in difference. This behavior is not observed if the kernel is run in \texttt{cuda-memcheck}. The cause of this is as of now unknown, but we assume that the reason is within memory-subsystem, because of the different behavior when started with \texttt{cuda-memcheck}.
+The final version of the Gaussian elimination algorithm in CUDA does not get the same result as the CPU implementation for some matrices. The smallest such case found is the generated 29-by-by-29 matrix, the result is close though, ~0.0001 in difference. This behaviour is not observed if the kernel is run in \texttt{cuda-memcheck}. The cause of this is as of now unknown, but we assume that the reason is within memory-subsystem, because of the different behaviour when started with \texttt{cuda-memcheck}.
 
 During the implementation process a lot of memory-based bugs were encountered, mostly out-of-bound accesses. \texttt{cuda-memcheck} helped a lot in finding the source of these bugs. Additionally the support of \texttt{printf} inside a kernel was speeding up the process of tracking faults.
